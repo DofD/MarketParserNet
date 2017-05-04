@@ -76,6 +76,10 @@
       <Project>{3f2a266d-f8f8-4f40-a082-b6e954f834ee}</Project>
       <Name>MarketParserNet.Bootstrap</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MarketParserNet.Framework\MarketParserNet.Framework.csproj">
+      <Project>{07774426-A2B1-496C-88FF-3E9070CF119D}</Project>
+      <Name>MarketParserNet.Framework</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

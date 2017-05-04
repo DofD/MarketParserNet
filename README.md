@@ -1,3 +1,3 @@
 # MarketParserNet
 Эволюция развития BookParser
-ASP.Net + RabitMQ + Redis + EF
+.Net + RabitMQ + Redis + EF + NLog + CastleWindsor

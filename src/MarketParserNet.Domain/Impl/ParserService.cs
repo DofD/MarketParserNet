@@ -1,6 +1,4 @@
-﻿using System;
-
-using Castle.Core.Logging;
+﻿using Castle.Core.Logging;
 
 using MarketParserNet.Framework.Interface;
 

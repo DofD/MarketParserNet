@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 using Castle.Core.Logging;
 
@@ -11,7 +12,13 @@ namespace MarketParserNet.Domain.Impl
     /// </summary>
     public abstract class BaseService : IService
     {
-        private readonly ILogger _logger;
+        protected readonly ILogger _logger;
+
+        private Task task;
+
+        private CancellationTokenSource tokenSource;
+
+        protected bool _disposed;
 
         protected BaseService(ILogger logger)
         {
@@ -40,7 +47,10 @@ namespace MarketParserNet.Domain.Impl
             this._logger.Debug(" --> Start");
             if (this.Stopped)
             {
-                // Подписываемся на получение сообщений
+                // Запускаем действие
+                this.tokenSource = new CancellationTokenSource();
+                var token = this.tokenSource.Token;
+                this.task = Task.Run(() => this.ServiceAction(), token);
                 this.Stopped = false;
             }
             this._logger.Debug(" <-- Start");
@@ -64,6 +74,11 @@ namespace MarketParserNet.Domain.Impl
         }
 
         /// <summary>
+        ///     Действие сервиса
+        /// </summary>
+        protected abstract void ServiceAction();
+
+        /// <summary>
         ///     Уничтожает экземпляр класса <see cref="ParserService" />.
         /// </summary>
         ~BaseService()
@@ -73,6 +88,18 @@ namespace MarketParserNet.Domain.Impl
 
         protected virtual void Dispose(bool disposing)
         {
+            if (this._disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.tokenSource.Dispose();
+
+            }
+
+            this._disposed = true;
         }
     }
 }

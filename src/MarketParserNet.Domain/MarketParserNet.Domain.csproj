@@ -38,6 +38,9 @@
       <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RabbitMQ.Client">
+      <HintPath>..\packages\RabbitMQ.Client.4.1.3\lib\net451\RabbitMQ.Client.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -49,6 +52,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Impl\BaseService.cs" />
+    <Compile Include="Impl\QueueRabbitMq.cs" />
+    <Compile Include="Impl\ConfigManagerRabbitMQ.cs" />
+    <Compile Include="Impl\ConfigurationRabbitMq.cs" />
+    <Compile Include="Impl\FileConfigurationRabbitMq.cs" />
     <Compile Include="Impl\SpiderService.cs" />
     <Compile Include="Impl\IParser.cs" />
     <Compile Include="Impl\ParserService.cs" />
@@ -58,6 +65,10 @@
     <ProjectReference Include="..\MarketParserNet.Framework\MarketParserNet.Framework.csproj">
       <Project>{07774426-A2B1-496C-88FF-3E9070CF119D}</Project>
       <Name>MarketParserNet.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MarketParserNet.Utils\MarketParserNet.Utils.csproj">
+      <Project>{160CC93E-35E3-4C44-B12E-BB44011A6FBD}</Project>
+      <Name>MarketParserNet.Utils</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

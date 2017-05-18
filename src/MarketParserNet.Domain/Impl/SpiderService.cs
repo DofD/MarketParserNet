@@ -10,5 +10,13 @@ namespace MarketParserNet.Domain.Impl
             : base(logger)
         {
         }
+
+        /// <summary>
+        ///     Действие сервиса
+        /// </summary>
+        protected override void ServiceAction()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

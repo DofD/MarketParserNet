@@ -1,14 +1,20 @@
-﻿using Castle.Core.Logging;
+﻿using System;
 
+using Castle.Core.Logging;
+
+using MarketParserNet.Framework;
 using MarketParserNet.Framework.Interface;
 
 namespace MarketParserNet.Domain.Impl
 {
     public class SpiderService : BaseService, ISpiderService
     {
-        public SpiderService(ILogger logger)
+        private readonly IQueue _queue;
+
+        public SpiderService(ILogger logger, IQueue queue)
             : base(logger)
         {
+            this._queue = queue;
         }
 
         /// <summary>
@@ -16,7 +22,17 @@ namespace MarketParserNet.Domain.Impl
         /// </summary>
         protected override void ServiceAction()
         {
-            throw new System.NotImplementedException();
+            this._queue.Subscribe(AppCost.LinkPath, this.HandleMessage); //TODO AppCost.LinkPath в настройки
+        }
+
+        /// <summary>
+        ///     Обработать сообщение
+        /// </summary>
+        /// <param name="message">Сообщение</param>
+        /// <returns>true если обработано</returns>
+        private bool HandleMessage(QueueMessage message)
+        {
+            throw new NotImplementedException();
         }
     }
 }

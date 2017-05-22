@@ -18,9 +18,8 @@ using ConnectionFactory = RabbitMQ.Client.ConnectionFactory;
 using IBasicConsumer = RabbitMQ.Client.IBasicConsumer;
 using IConnection = RabbitMQ.Client.IConnection;
 using IModelExensions = RabbitMQ.Client.IModelExensions;
-using ParallelEnumerable = System.Linq.ParallelEnumerable;
 
-namespace Taxnet.CryptxDSS.Transport.Queue.Adapters.RabbitMQ.Impl
+namespace MarketParserNet.Domain.Impl
 {
     /// <summary>
     ///     Адаптер очереди RabbitMQ
@@ -63,8 +62,6 @@ namespace Taxnet.CryptxDSS.Transport.Queue.Adapters.RabbitMQ.Impl
         /// </summary>
         private readonly ReaderWriterLockSlim _observersLock = new ReaderWriterLockSlim();
 
-        private readonly IConfigManager<IConfigurationRabbitMq> configManager;
-
         /// <summary>
         ///     Соединение
         /// </summary>
@@ -105,7 +102,6 @@ namespace Taxnet.CryptxDSS.Transport.Queue.Adapters.RabbitMQ.Impl
             }
 
             this._factory = factory;
-            this.configManager = configManager;
             this._logger = logger;
 
             this._config = configManager.GetConfiguration();
@@ -136,14 +132,11 @@ namespace Taxnet.CryptxDSS.Transport.Queue.Adapters.RabbitMQ.Impl
         /// <returns>Элемент очереди</returns>
         public QueueMessage Dequeue(string routingKey)
         {
-            var configMessage = this.GetConfigurationMessageRabbitMq(typeof(SimpleMessage));
-            var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
-            var queueFullName = GetQueueFullName(configQueue, routingKey);
+            var queueFullName = routingKey;
 
-            BasicGetResult receive = null;
             try
             {
-                receive = this._model.BasicGet(queueFullName, false);
+                var receive = this._model.BasicGet(queueFullName, false);
                 if (receive == null)
                 {
                     return null;
@@ -170,53 +163,54 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="routingKey">Маска</param>
         public void Enqueue(QueueMessage item, string routingKey)
         {
-            // Создадим базовые параметры
-            var basicProperties = this._model.CreateBasicProperties();
+            //// Создадим базовые параметры
+            //var basicProperties = this._model.CreateBasicProperties();
 
-            // Говорим что сообщение постоянное
-            basicProperties.Persistent = true;
+            //// Говорим что сообщение постоянное
+            //basicProperties.Persistent = true;
 
-            var configMessage = this.GetConfigurationMessageRabbitMq(item.GetType());
+            //var configMessage = this.GetConfigurationMessageRabbitMq(item.GetType());
 
-            var configExchange = configMessage.ExchangeConfig ?? this._configManager.GetDefaultExchangeConfig();
-            var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
+            //var configExchange = configMessage.ExchangeConfig ?? this._configManager.GetDefaultExchangeConfig();
+            //var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
 
-            item.TracingOperation.AddPoint(this._checkPointManager.CreatePoint(ENQUEUE + SEND, routingKey));
-            item.TracingOperation.AddRoute(routingKey);
+            //item.TracingOperation.AddPoint(this._checkPointManager.CreatePoint(ENQUEUE + SEND, routingKey));
+            //item.TracingOperation.AddRoute(routingKey);
 
-            // Создаем прокси объект
-            var proxy = this._proxyObjectFactory.CreateProxy(item);
-            proxy.Self = Encoding.UTF8.GetString(this._serializer.Serialize(item));
+            //// Создаем прокси объект
+            //var proxy = this._proxyObjectFactory.CreateProxy(item);
+            //proxy.Self = Encoding.UTF8.GetString(this._serializer.Serialize(item));
 
-            // Обрабатываем информационный блок
-            proxy.Info.Header = item.TracingOperation.GetHeader();
-            proxy.Info.Route = item.TracingOperation.GetRoute();
-            proxy.Info.CheckPoints = item.TracingOperation.GetCheckPoints();
+            //// Обрабатываем информационный блок
+            //proxy.Info.Header = item.TracingOperation.GetHeader();
+            //proxy.Info.Route = item.TracingOperation.GetRoute();
+            //proxy.Info.CheckPoints = item.TracingOperation.GetCheckPoints();
 
-            var exchangeName = this.GetExchangeName(configExchange.Name, item);
+            //var exchangeName = this.GetExchangeName(configExchange.Name, item);
 
-            // блокируем модель иначе может вызваться исключение при много поточности
-            lock (this._modelLock)
-            {
-                try
-                {
-                    // Инициализируем объекты RabbitMq
-                    InitializeRabbitMq(configExchange, configQueue, routingKey, this._model, exchangeName);
+            //// блокируем модель иначе может вызваться исключение при много поточности
+            //lock (this._modelLock)
+            //{
+            //    try
+            //    {
+            //        // Инициализируем объекты RabbitMq
+            //        InitializeRabbitMq(configExchange, configQueue, routingKey, this._model, exchangeName);
 
-                    // Публикуем
-                    this._model.BasicPublish(
-                        exchangeName,
-                        routingKey,
-                        configMessage.Mandatory,
-                        configMessage.Immediate,
-                        basicProperties,
-                        this._serializer.Serialize(proxy));
-                }
-                catch (Exception e)
-                {
-                    this._errorHandler.HandleError(this, e);
-                }
-            }
+            //        // Публикуем
+            //        this._model.BasicPublish(
+            //            exchangeName,
+            //            routingKey,
+            //            configMessage.Mandatory,
+            //            configMessage.Immediate,
+            //            basicProperties,
+            //            this._serializer.Serialize(proxy));
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        this._errorHandler.HandleError(this, e);
+            //    }
+            //}
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -225,11 +219,11 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="mask">Маска</param>
         /// <param name="observer">Объект, который должен получать уведомления</param>
         /// <returns>Ссылка на подписку</returns>
-        public IDisposable Subscribe(string mask, Func<SimpleMessage, bool> observer)
+        public IDisposable Subscribe(string mask, Func<QueueMessage, bool> observer)
         {
             if (!this._observers.ContainsKey(mask))
             {
-                this._observers[mask] = new List<Func<SimpleMessage, bool>>();
+                this._observers[mask] = new List<Func<QueueMessage, bool>>();
             }
 
             // Добавляем в список подписчиков
@@ -259,11 +253,11 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="routingKey">Маска</param>
         /// <param name="exchangeName">Имя точки расширения</param>
         /// <returns>Полное имя очереди</returns>
-        private static string GetQueueFullName(IQueueConfig queueConfig, string routingKey, string exchangeName = null)
-        {
-            var name = exchangeName ?? queueConfig.Name;
-            return name + ":" + routingKey;
-        }
+        //private static string GetQueueFullName(IQueueConfig queueConfig, string routingKey, string exchangeName = null)
+        //{
+        //    var name = exchangeName ?? queueConfig.Name;
+        //    return name + ":" + routingKey;
+        //}
 
         /// <summary>
         ///     Инициализировать объекты в очереди
@@ -273,26 +267,26 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="routingKey">Путь</param>
         /// <param name="model">Модель AMQP</param>
         /// <param name="exchangeName">Наименование точки расширения</param>
-        private static void InitializeRabbitMq(
-            IExchangeConfig exchangeConfig,
-            IQueueConfig queueConfig,
-            string routingKey,
-            IModel model,
-            string exchangeName = null)
-        {
-            exchangeName = exchangeName ?? exchangeConfig.Name;
+        //private static void InitializeRabbitMq(
+        //    IExchangeConfig exchangeConfig,
+        //    IQueueConfig queueConfig,
+        //    string routingKey,
+        //    IModel model,
+        //    string exchangeName = null)
+        //{
+        //    exchangeName = exchangeName ?? exchangeConfig.Name;
 
-            // Создадим точку обмена
-            model.ExchangeDeclare(exchangeName, exchangeConfig.Type, exchangeConfig.Durable);
+        //    // Создадим точку обмена
+        //    model.ExchangeDeclare(exchangeName, exchangeConfig.Type, exchangeConfig.Durable);
 
-            var queueFullName = GetQueueFullName(queueConfig, routingKey, exchangeName);
+        //    var queueFullName = GetQueueFullName(queueConfig, routingKey, exchangeName);
 
-            // Создадим очередь
-            model.QueueDeclare(queueFullName, queueConfig.Durable, queueConfig.Exclusive, queueConfig.AutoDelete, null);
+        //    // Создадим очередь
+        //    model.QueueDeclare(queueFullName, queueConfig.Durable, queueConfig.Exclusive, queueConfig.AutoDelete, null);
 
-            // Свяжем
-            model.QueueBind(queueFullName, exchangeName, routingKey);
-        }
+        //    // Свяжем
+        //    model.QueueBind(queueFullName, exchangeName, routingKey);
+        //}
 
         /// <summary>
         ///     Авто получение сообщений
@@ -300,151 +294,153 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="routingKey">Маска</param>
         private void AutoDequeue(string routingKey)
         {
-            // Создается параллельное соединение
-            var configMessage = this.GetConfigurationMessageRabbitMq(typeof(SimpleMessage));
-            var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
-            var queueFullName = GetQueueFullName(configQueue, routingKey);
-            var arg = this._configManager.GetConsumerArgument(routingKey);
+            throw new NotImplementedException();
 
-            var lastGetTime = DateTime.MinValue;
-            EventingBasicConsumer consumer = null;
-            var consumerTag = Guid.NewGuid().ToString();
+            //// Создается параллельное соединение
+            //var configMessage = this.GetConfigurationMessageRabbitMq(typeof(QueueMessage));
+            //var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
+            //var queueFullName = GetQueueFullName(configQueue, routingKey);
+            //var arg = this._configManager.GetConsumerArgument(routingKey);
 
-            // сохраняем предыдущую модель так как при переподключение будет создана новая
-            var model = this._model;
+            //var lastGetTime = DateTime.MinValue;
+            //EventingBasicConsumer consumer = null;
+            //var consumerTag = Guid.NewGuid().ToString();
 
-            // блокируем модель иначе может вызваться исключение при много поточности
-            lock (this._modelLock)
-            {
-                // Создадим очередь
-                model.QueueDeclare(
-                    queueFullName,
-                    configQueue.Durable,
-                    configQueue.Exclusive,
-                    configQueue.AutoDelete,
-                    null);
-            }
+            //// сохраняем предыдущую модель так как при переподключение будет создана новая
+            //var model = this._model;
 
-            // Флаг отправки пина
-            var sendPing = false;
+            //// блокируем модель иначе может вызваться исключение при много поточности
+            //lock (this._modelLock)
+            //{
+            //    // Создадим очередь
+            //    model.QueueDeclare(
+            //        queueFullName,
+            //        configQueue.Durable,
+            //        configQueue.Exclusive,
+            //        configQueue.AutoDelete,
+            //        null);
+            //}
 
-            // Флаг обработки
-            var isRun = false;
+            //// Флаг отправки пина
+            //var sendPing = false;
 
-            // Таймер нужен, так как иногда потребитель зависает
-            this._consumerRecreateTimers[routingKey] = new WrapTimer(
-                timer =>
-                {
-                    if (isRun)
-                    {
-                        return;
-                    }
+            //// Флаг обработки
+            //var isRun = false;
 
-                    if (DateTime.UtcNow - lastGetTime < TimeSpan.FromMilliseconds(this._config.ConsumerRecreateTime)
-                        && model == this._model)
-                    {
-                        return; // Все нормально потребитель не завис
-                    }
+            //// Таймер нужен, так как иногда потребитель зависает
+            //this._consumerRecreateTimers[routingKey] = new WrapTimer(
+            //    timer =>
+            //    {
+            //        if (isRun)
+            //        {
+            //            return;
+            //        }
 
-                    isRun = true;
+            //        if (DateTime.UtcNow - lastGetTime < TimeSpan.FromMilliseconds(this._config.ConsumerRecreateTime)
+            //            && model == this._model)
+            //        {
+            //            return; // Все нормально потребитель не завис
+            //        }
 
-                    if (model != this._model)
-                    {
-                        consumer = null;
-                    }
+            //        isRun = true;
 
-                    if (consumer != null)
-                    {
-                        // Пинг был отправлен, а ответа так и нет
-                        if (sendPing)
-                        {
-                            // Пересоздаем    
-                            consumer.OnCancel();
-                            lock (this._modelLock)
-                            {
-                                this._model.BasicCancel(consumerTag);
-                            }
+            //        if (model != this._model)
+            //        {
+            //            consumer = null;
+            //        }
 
-                            sendPing = false;
-                            this._logger.Debug(this, string.Format(Resources.ConsumerRecreateByRoute, routingKey));
-                        }
-                        else
-                        {
-                            // Отправим пинг
-                            this.Enqueue(
-                                new PingMessage { SendTime = DateTime.UtcNow, CryptoProviderName = configQueue.Name },
-                                routingKey);
+            //        if (consumer != null)
+            //        {
+            //            // Пинг был отправлен, а ответа так и нет
+            //            if (sendPing)
+            //            {
+            //                // Пересоздаем    
+            //                consumer.OnCancel();
+            //                lock (this._modelLock)
+            //                {
+            //                    this._model.BasicCancel(consumerTag);
+            //                }
 
-                            sendPing = true;
+            //                sendPing = false;
+            //                this._logger.Debug(this, string.Format(Resources.ConsumerRecreateByRoute, routingKey));
+            //            }
+            //            else
+            //            {
+            //                // Отправим пинг
+            //                this.Enqueue(
+            //                    new PingMessage { SendTime = DateTime.UtcNow, CryptoProviderName = configQueue.Name },
+            //                    routingKey);
 
-                            this._logger.Debug(this, string.Format("Отправили пинг на [{0}]", routingKey));
+            //                sendPing = true;
 
-                            isRun = false;
-                            return;
-                        }
-                    }
+            //                this._logger.Debug(this, string.Format("Отправили пинг на [{0}]", routingKey));
 
-                    lock (this._modelLock) // блокируем модель иначе может вызваться исключение
-                    {
-                        consumer = new EventingBasicConsumer(this._model);
+            //                isRun = false;
+            //                return;
+            //            }
+            //        }
 
-                        try
-                        {
-                            IModelExensions.BasicConsume(
-                                this._model,
-                                queueFullName,
-                                (bool)false,
-                                consumerTag,
-                                (IDictionary<string, object>)arg,
-                                (IBasicConsumer)consumer);
-                        }
-                        catch (OperationInterruptedException e)
-                        {
-                            consumer = null;
+            //        lock (this._modelLock) // блокируем модель иначе может вызваться исключение
+            //        {
+            //            consumer = new EventingBasicConsumer(this._model);
 
-                            this._errorHandler.HandleError(this, e);
-                            return;
-                        }
-                    }
+            //            try
+            //            {
+            //                IModelExensions.BasicConsume(
+            //                    this._model,
+            //                    queueFullName,
+            //                    (bool)false,
+            //                    consumerTag,
+            //                    (IDictionary<string, object>)arg,
+            //                    (IBasicConsumer)consumer);
+            //            }
+            //            catch (OperationInterruptedException e)
+            //            {
+            //                consumer = null;
 
-                    this._logger.Debug(this, string.Format(Resources.SubscribersToRoute, routingKey));
+            //                this._errorHandler.HandleError(this, e);
+            //                return;
+            //            }
+            //        }
 
-                    try
-                    {
-                        isRun = false; // так как тут получение из очереди идет через ожидание
+            //        this._logger.Debug(this, string.Format(Resources.SubscribersToRoute, routingKey));
 
-                        consumer.Received += (sender, args) =>
-                        {
-                            if (this._config.AsParallel)
-                            {
-                                try
-                                {
-                                    ThreadPool.QueueUserWorkItem(
-                                        state =>
-                                        {
-                                            sendPing = false; // Сбрасываем отправку пинг пакета
-                                            lastGetTime = this.HandleMessage(routingKey, args);
-                                        });
-                                }
-                                catch (Exception e)
-                                {
-                                    this._errorHandler.HandleError(this, e);
-                                    this._model.BasicNack(args.DeliveryTag, false, true);
-                                }
-                            }
-                            else
-                            {
-                                sendPing = false; // Сбрасываем отправку пинг пакета
-                                lastGetTime = this.HandleMessage(routingKey, args);
-                            }
-                        };
-                    }
-                    catch (Exception e)
-                    {
-                        this._errorHandler.HandleError(this, e);
-                    }
-                },
-                this._config.ConsumerRecreateTime);
+            //        try
+            //        {
+            //            isRun = false; // так как тут получение из очереди идет через ожидание
+
+            //            consumer.Received += (sender, args) =>
+            //            {
+            //                if (this._config.AsParallel)
+            //                {
+            //                    try
+            //                    {
+            //                        ThreadPool.QueueUserWorkItem(
+            //                            state =>
+            //                            {
+            //                                sendPing = false; // Сбрасываем отправку пинг пакета
+            //                                lastGetTime = this.HandleMessage(routingKey, args);
+            //                            });
+            //                    }
+            //                    catch (Exception e)
+            //                    {
+            //                        this._errorHandler.HandleError(this, e);
+            //                        this._model.BasicNack(args.DeliveryTag, false, true);
+            //                    }
+            //                }
+            //                else
+            //                {
+            //                    sendPing = false; // Сбрасываем отправку пинг пакета
+            //                    lastGetTime = this.HandleMessage(routingKey, args);
+            //                }
+            //            };
+            //        }
+            //        catch (Exception e)
+            //        {
+            //            this._errorHandler.HandleError(this, e);
+            //        }
+            //    },
+            //    this._config.ConsumerRecreateTime);
         }
 
         /// <summary>
@@ -499,92 +495,21 @@ this._logger.Error("Ошибка получения элемента из оче
             {
                 this.Disconnect();
 
-                foreach (var autoDequeueThread in this._autoDequeueThreads)
-                {
-                    this.ShutDownAutoDequeue(autoDequeueThread.Key);
-                }
+                //foreach (var autoDequeueThread in this._autoDequeueThreads)
+                //{
+                //    this.ShutDownAutoDequeue(autoDequeueThread.Key);
+                //}
 
-                // Завершаем таймеры
-                foreach (var consumerRecreateTimer in this._consumerRecreateTimers)
-                {
-                    consumerRecreateTimer.Value.Dispose();
-                }
+                //// Завершаем таймеры
+                //foreach (var consumerRecreateTimer in this._consumerRecreateTimers)
+                //{
+                //    consumerRecreateTimer.Value.Dispose();
+                //}
 
                 this._observersLock.Dispose();
             }
 
             this._disposed = true;
-        }
-
-        /// <summary>
-        ///     Получить конфигурацию для типа
-        /// </summary>
-        /// <param name="type">Тип</param>
-        /// <returns>Конфигурация</returns>
-        private IConfigurationMessageRabbitMq GetConfigurationMessageRabbitMq(Type type)
-        {
-            var configMessage = this._configMessages.ContainsKey(type)
-                ? this._configMessages[type]
-                : this._configManager.GetDefaultConfigMessage(type);
-            return configMessage;
-        }
-
-        /// <summary>
-        ///     Получить имя точки обмена
-        /// </summary>
-        /// <param name="baseName">Базовое имя</param>
-        /// <param name="item">Сообщение</param>
-        /// <returns>Имя точки обмена</returns>
-        private string GetExchangeName(string baseName, SimpleMessage item)
-        {
-            return this._configManager.GetExchangeName(baseName, item);
-        }
-
-        /// <summary>
-        ///     Обработать сообщение
-        /// </summary>
-        /// <param name="routingKey">Маршрут</param>
-        /// <param name="receive">Сообщение из очереди</param>
-        /// <returns>Время последней обработки</returns>
-        private DateTime HandleMessage(string routingKey, BasicDeliverEventArgs receive)
-        {
-            try
-            {
-                var message = Deserialize(receive.Body);
-
-                if (message != null)
-                {
-                    this._logger.Debug(
-                        this,
-                        string.Format(Resources.GetMessage, message.Id, message.GetType().FullName, routingKey));
-                }
-
-                // Если это сообщение пинга просто выходим
-                if (message is PingMessage)
-                {
-                    this._model.BasicAck(receive.DeliveryTag, false);
-                    return DateTime.UtcNow;
-                }
-
-                message.TracingOperation.AddPoint(this._checkPointManager.CreatePoint(DEQUEUE, routingKey));
-
-                if (ParallelEnumerable.AsParallel(this._observers[routingKey]).Select(o => o(message)).Any(r => r))
-                {
-                    this._model.BasicAck(receive.DeliveryTag, false);
-                    this._logger.Debug(this, string.Format(Resources.AckMessage, message.Id));
-                }
-                else
-                {
-                    this._model.BasicNack(receive.DeliveryTag, false, true);
-                    this._logger.Debug(this, string.Format(Resources.NoAckMessage, message.Id));
-                }
-            }
-            catch (Exception e)
-            {
-                this._errorHandler.HandleError(this, e);
-            }
-
-            return DateTime.UtcNow;
         }
 
         /// <summary>
@@ -594,7 +519,7 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="args">Аргументы события</param>
         private void OnCallbackException(object sender, CallbackExceptionEventArgs args)
         {
-            this._logger.Error(this, args.Exception);
+            this._logger.Error("Ошибка в RabbitMQ", args.Exception);
         }
 
         /// <summary>
@@ -604,7 +529,7 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="args">Аргументы</param>
         private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs args)
         {
-            this._logger.Info(this, string.Format(Resources.ConnectionBlocked, args.Reason));
+            this._logger.Info($"Соединение с RabbitMQ заблокировано. Причина: '{args.Reason}'");
         }
 
         /// <summary>
@@ -619,19 +544,7 @@ this._logger.Error("Ошибка получения элемента из оче
                 return;
             }
 
-            // Отключаем таймеры потребителей
-            foreach (var consumerRecreateTimer in this._consumerRecreateTimers)
-            {
-                consumerRecreateTimer.Value.Stop();
-            }
-
-            this.Connect();
-
-            // Перезапускаем таймеры потребителей
-            foreach (var consumerRecreateTimer in this._consumerRecreateTimers)
-            {
-                consumerRecreateTimer.Value.Start();
-            }
+            this._logger.Info("Разрыв соединения с RabbitMQ.");
         }
 
         /// <summary>
@@ -641,7 +554,7 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="eventArgs">Аргументы</param>
         private void OnConnectionUnblocked(object sender, EventArgs eventArgs)
         {
-            this._logger.Info(this, Resources.ConnectionUnblocked);
+            this._logger.Info("Соединение разблокировано");
         }
 
         /// <summary>
@@ -650,21 +563,23 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="mask">Маска</param>
         private void ShutDownAutoDequeue(string mask)
         {
-            if (!this._autoDequeueThreads.ContainsKey(mask))
-            {
-                return;
-            }
+            throw new NotImplementedException();
 
-            lock (this._autoDequeueThreadsLock)
-            {
-                if (this._autoDequeueThreads[mask].IsAlive)
-                {
-                    this._autoDequeueThreads[mask].Abort();
-                }
+            //if (!this._autoDequeueThreads.ContainsKey(mask))
+            //{
+            //    return;
+            //}
 
-                Thread thread;
-                this._autoDequeueThreads.TryRemove(mask, out thread);
-            }
+            //lock (this._autoDequeueThreadsLock)
+            //{
+            //    if (this._autoDequeueThreads[mask].IsAlive)
+            //    {
+            //        this._autoDequeueThreads[mask].Abort();
+            //    }
+
+            //    Thread thread;
+            //    this._autoDequeueThreads.TryRemove(mask, out thread);
+            //}
         }
 
         /// <summary>
@@ -696,7 +611,7 @@ this._logger.Error("Ошибка получения элемента из оче
             factory.UserName = string.IsNullOrEmpty(config.UserName) ? "guest" : config.UserName;
             factory.Password = string.IsNullOrEmpty(config.Password) ? "guest" : config.Password;
 
-            this._logger.Debug(this, string.Format(Resources.BeginTryToConnect, config.HostName));
+            this._logger.Debug($"Начинаем устанавливать соединение к {config.HostName}");
 
             IConnection connection = null;
             do
@@ -707,7 +622,7 @@ this._logger.Error("Ошибка получения элемента из оче
                 }
                 catch (Exception e)
                 {
-                    this._logger.Error(this, e);
+                    this._logger.Error($"Ошибка соединения к {config.HostName}", e);
 
                     // Соединение не удалось делаем паузу
                     Thread.Sleep(this._config.ReconnectInterval);
@@ -715,7 +630,7 @@ this._logger.Error("Ошибка получения элемента из оче
             }
             while (connection == null || !connection.IsOpen);
 
-            this._logger.Debug(this, string.Format(Resources.ConnectionEstablished, config.HostName));
+            this._logger.Debug($"Соединение к {config.HostName} установлено.");
 
             return connection;
         }
@@ -726,18 +641,20 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="mask">Маска</param>
         private void TurnOnAutoDequeue(string mask)
         {
-            if (!this._autoDequeueThreads.ContainsKey(mask))
-            {
-                this._autoDequeueThreads[mask] = new Thread(() => this.AutoDequeue(mask)) { Name = mask };
-            }
+            throw new NotImplementedException();
 
-            lock (this._autoDequeueThreadsLock)
-            {
-                if (!this._autoDequeueThreads[mask].IsAlive)
-                {
-                    this._autoDequeueThreads[mask].Start();
-                }
-            }
+            //if (!this._autoDequeueThreads.ContainsKey(mask))
+            //{
+            //    this._autoDequeueThreads[mask] = new Thread(() => this.AutoDequeue(mask)) { Name = mask };
+            //}
+
+            //lock (this._autoDequeueThreadsLock)
+            //{
+            //    if (!this._autoDequeueThreads[mask].IsAlive)
+            //    {
+            //        this._autoDequeueThreads[mask].Start();
+            //    }
+            //}
         }
 
         /// <summary>
@@ -745,12 +662,12 @@ this._logger.Error("Ошибка получения элемента из оче
         /// </summary>
         /// <param name="mask">Маска</param>
         /// <param name="observer">Подписчик</param>
-        private void Unsubscribe(string mask, Func<SimpleMessage, bool> observer)
+        private void Unsubscribe(string mask, Func<QueueMessage, bool> observer)
         {
-            this._logger.Debug(this, string.Format(" --> Unsubscribe {0}", mask));
+            this._logger.Debug($" --> Unsubscribe {mask}");
             if (!this._observers.ContainsKey(mask))
             {
-                this._logger.Debug(this, " <-- Unsubscribe NoMask");
+                this._logger.Debug(" <-- Unsubscribe NoMask");
                 return;
             }
 
@@ -766,14 +683,7 @@ this._logger.Error("Ошибка получения элемента из оче
 
             this.ShutDownAutoDequeue(mask);
 
-            // Удаляем таймер пересоздания потребителя
-            WrapTimer timer;
-            if (this._consumerRecreateTimers.TryRemove(mask, out timer))
-            {
-                timer.Dispose();
-            }
-
-            this._logger.Debug(this, string.Format(" <-- Unsubscribe {0}", mask));
+            this._logger.Debug($" <-- Unsubscribe {mask}");
         }
 
         /// <summary>
@@ -840,10 +750,7 @@ this._logger.Error("Ошибка получения элемента из оче
                 if (disposing)
                 {
                     var action = this._unsubscribe;
-                    if (action != null)
-                    {
-                        action();
-                    }
+                    action?.Invoke();
                 }
 
                 this._disposed = true;

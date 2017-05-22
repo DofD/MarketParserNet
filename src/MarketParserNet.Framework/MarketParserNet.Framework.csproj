@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppCost.cs" />
     <Compile Include="Interface\IConfigManager.cs" />
     <Compile Include="Interface\IConfigurationRabbitMq.cs" />
     <Compile Include="Interface\IParserService.cs" />

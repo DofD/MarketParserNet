@@ -18,7 +18,14 @@ namespace MarketParserNet.Test
         public void EnqueueTest()
         {
             var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(),  new NullLogger());
-            queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = "Тестовое сообщение" }, "Test2");
+            queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = "Тестовое сообщение" }, "Test");
+        }
+
+        [TestMethod]
+        public void DequeueTest()
+        {
+            var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(), new NullLogger());
+            queue.Dequeue("Test");
         }
     }
 }

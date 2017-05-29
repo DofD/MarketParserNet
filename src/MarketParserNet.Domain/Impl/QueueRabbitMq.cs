@@ -73,7 +73,7 @@ namespace MarketParserNet.Domain.Impl
         ///     Модель AMQP
         /// </summary>
         private IModel _model;
-       
+
         /// <summary>
         ///     Сериализатор
         /// </summary>
@@ -136,7 +136,7 @@ namespace MarketParserNet.Domain.Impl
         /// <returns>Элемент очереди</returns>
         public QueueMessage Dequeue(string routingKey)
         {
-            var queueFullName = routingKey;
+            var queueFullName = GetQueueFullName(routingKey, this._config.ExchangeName);
 
             try
             {
@@ -146,7 +146,7 @@ namespace MarketParserNet.Domain.Impl
                     return null;
                 }
 
-                var message = Deserialize(receive.Body);
+                var message = this._serializer.Deserialize<QueueMessage>(receive.Body);
 
                 this._model.BasicAck(receive.DeliveryTag, false);
 
@@ -155,8 +155,7 @@ namespace MarketParserNet.Domain.Impl
             catch (Exception e)
             {
                 this._logger.Error("Ошибка получения элемента из очереди", e);
-
-                return null;
+                throw;
             }
         }
 
@@ -243,13 +242,18 @@ namespace MarketParserNet.Domain.Impl
             // Создадим точку обмена
             model.ExchangeDeclare(exchangeName, ExchangeType.Direct, this._config.ExchangeDurable);
 
-            var queueFullName = $"{exchangeName}:{routingKey}";
+            var queueFullName = GetQueueFullName(routingKey, exchangeName);
 
             // Создадим очередь
             model.QueueDeclare(queueFullName, this._config.QueueDurable, this._config.QueueExclusive, this._config.QueueAutoDelete, null);
 
             // Свяжем
             model.QueueBind(queueFullName, exchangeName, routingKey);
+        }
+
+        private static string GetQueueFullName(string routingKey, string exchangeName)
+        {
+            return $"{exchangeName}:{routingKey}";
         }
 
         /// <summary>
@@ -419,16 +423,6 @@ namespace MarketParserNet.Domain.Impl
 
             // Подписываемся на события
             this.SubscribeToEvents(this._connection);
-        }
-
-        /// <summary>
-        ///     Десериализовать
-        /// </summary>
-        /// <param name="body">Сообщение из очереди</param>
-        /// <returns>Полученное сообщение</returns>
-        private static QueueMessage Deserialize(byte[] body)
-        {
-            return body == null ? null : JsonConvert.DeserializeObject<QueueMessage>(Encoding.UTF8.GetString(body));
         }
 
         /// <summary>

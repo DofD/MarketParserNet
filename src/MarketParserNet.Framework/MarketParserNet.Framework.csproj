@@ -45,6 +45,7 @@
     <Compile Include="Interface\IConfigurationRabbitMq.cs" />
     <Compile Include="Interface\IParserService.cs" />
     <Compile Include="Interface\IQueue.cs" />
+    <Compile Include="Interface\ISerializer.cs" />
     <Compile Include="Interface\IService.cs" />
     <Compile Include="Interface\ISpiderService.cs" />
     <Compile Include="Interface\QueueMessage.cs" />

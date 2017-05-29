@@ -3,6 +3,7 @@
 using Castle.Core.Logging;
 
 using MarketParserNet.Domain.Impl;
+using MarketParserNet.Framework.Interface;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,7 +17,8 @@ namespace MarketParserNet.Test
         [TestMethod]
         public void EnqueueTest()
         {
-            var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new NullLogger());
+            var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(),  new NullLogger());
+            queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = "Тестовое сообщение" }, "Test2");
         }
     }
 }

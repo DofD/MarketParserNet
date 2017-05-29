@@ -12,12 +12,9 @@ using Newtonsoft.Json;
 
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using RabbitMQ.Client.Exceptions;
 
 using ConnectionFactory = RabbitMQ.Client.ConnectionFactory;
-using IBasicConsumer = RabbitMQ.Client.IBasicConsumer;
 using IConnection = RabbitMQ.Client.IConnection;
-using IModelExensions = RabbitMQ.Client.IModelExensions;
 
 namespace MarketParserNet.Domain.Impl
 {
@@ -76,16 +73,22 @@ namespace MarketParserNet.Domain.Impl
         ///     Модель AMQP
         /// </summary>
         private IModel _model;
+       
+        /// <summary>
+        ///     Сериализатор
+        /// </summary>
+        private readonly ISerializer _serializer;
 
         /// <summary>
         ///     Инициализирует новый экземпляр класса <see cref="QueueRabbitMq" />
         /// </summary>
         /// <param name="factory">Фабрика подключения</param>
         /// <param name="configManager">Менеджер конфигурации</param>
+        /// <param name="serializer">Сериализатор</param>
         /// <param name="logger">Логировщик</param>
         public QueueRabbitMq(
             ConnectionFactory factory,
-            IConfigManager<IConfigurationRabbitMq> configManager,
+            IConfigManager<IConfigurationRabbitMq> configManager, ISerializer serializer,
             ILogger logger)
         {
             if (factory == null)
@@ -103,6 +106,7 @@ namespace MarketParserNet.Domain.Impl
 
             this._factory = factory;
             this._logger = logger;
+            this._serializer = serializer;
 
             this._config = configManager.GetConfiguration();
 
@@ -150,7 +154,7 @@ namespace MarketParserNet.Domain.Impl
             }
             catch (Exception e)
             {
-this._logger.Error("Ошибка получения элемента из очереди", e);
+                this._logger.Error("Ошибка получения элемента из очереди", e);
 
                 return null;
             }
@@ -163,54 +167,33 @@ this._logger.Error("Ошибка получения элемента из оче
         /// <param name="routingKey">Маска</param>
         public void Enqueue(QueueMessage item, string routingKey)
         {
-            //// Создадим базовые параметры
-            //var basicProperties = this._model.CreateBasicProperties();
+            // Создадим базовые параметры
+            var basicProperties = this._model.CreateBasicProperties();
 
-            //// Говорим что сообщение постоянное
-            //basicProperties.Persistent = true;
+            // Говорим что сообщение постоянное
+            basicProperties.Persistent = true;
 
-            //var configMessage = this.GetConfigurationMessageRabbitMq(item.GetType());
+            // блокируем модель иначе может вызваться исключение при много поточности
+            lock (this._modelLock)
+            {
+                try
+                {
+                    // Инициализируем объекты RabbitMq
+                    this.InitializeRabbitMq(routingKey, this._model, this._config.ExchangeName);
 
-            //var configExchange = configMessage.ExchangeConfig ?? this._configManager.GetDefaultExchangeConfig();
-            //var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
-
-            //item.TracingOperation.AddPoint(this._checkPointManager.CreatePoint(ENQUEUE + SEND, routingKey));
-            //item.TracingOperation.AddRoute(routingKey);
-
-            //// Создаем прокси объект
-            //var proxy = this._proxyObjectFactory.CreateProxy(item);
-            //proxy.Self = Encoding.UTF8.GetString(this._serializer.Serialize(item));
-
-            //// Обрабатываем информационный блок
-            //proxy.Info.Header = item.TracingOperation.GetHeader();
-            //proxy.Info.Route = item.TracingOperation.GetRoute();
-            //proxy.Info.CheckPoints = item.TracingOperation.GetCheckPoints();
-
-            //var exchangeName = this.GetExchangeName(configExchange.Name, item);
-
-            //// блокируем модель иначе может вызваться исключение при много поточности
-            //lock (this._modelLock)
-            //{
-            //    try
-            //    {
-            //        // Инициализируем объекты RabbitMq
-            //        InitializeRabbitMq(configExchange, configQueue, routingKey, this._model, exchangeName);
-
-            //        // Публикуем
-            //        this._model.BasicPublish(
-            //            exchangeName,
-            //            routingKey,
-            //            configMessage.Mandatory,
-            //            configMessage.Immediate,
-            //            basicProperties,
-            //            this._serializer.Serialize(proxy));
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        this._errorHandler.HandleError(this, e);
-            //    }
-            //}
-            throw new NotImplementedException();
+                    // Публикуем
+                    this._model.BasicPublish(
+                        this._config.ExchangeName,
+                        routingKey,
+                        basicProperties,
+                        this._serializer.Serialize(item));
+                }
+                catch (Exception e)
+                {
+                    this._logger.Error("Ошибка публикации сообщения в очередь", e);
+                    throw;
+                }
+            }
         }
 
         /// <summary>
@@ -247,46 +230,27 @@ this._logger.Error("Ошибка получения элемента из оче
         }
 
         /// <summary>
-        ///     Получить полное имя очереди
-        /// </summary>
-        /// <param name="queueConfig">Конфигурация очереди</param>
-        /// <param name="routingKey">Маска</param>
-        /// <param name="exchangeName">Имя точки расширения</param>
-        /// <returns>Полное имя очереди</returns>
-        //private static string GetQueueFullName(IQueueConfig queueConfig, string routingKey, string exchangeName = null)
-        //{
-        //    var name = exchangeName ?? queueConfig.Name;
-        //    return name + ":" + routingKey;
-        //}
-
-        /// <summary>
         ///     Инициализировать объекты в очереди
         /// </summary>
-        /// <param name="exchangeConfig">Настройки точки обмена</param>
-        /// <param name="queueConfig">Настройки очереди</param>
-        /// <param name="routingKey">Путь</param>
-        /// <param name="model">Модель AMQP</param>
-        /// <param name="exchangeName">Наименование точки расширения</param>
-        //private static void InitializeRabbitMq(
-        //    IExchangeConfig exchangeConfig,
-        //    IQueueConfig queueConfig,
-        //    string routingKey,
-        //    IModel model,
-        //    string exchangeName = null)
-        //{
-        //    exchangeName = exchangeName ?? exchangeConfig.Name;
+        /// <param name = "routingKey" > Путь </param >
+        /// < param name= "model" > Модель AMQP</param>
+        /// <param name = "exchangeName" > Наименование точки расширения</param>
+        private void InitializeRabbitMq(
+            string routingKey,
+            IModel model,
+            string exchangeName)
+        {
+            // Создадим точку обмена
+            model.ExchangeDeclare(exchangeName, ExchangeType.Direct, this._config.ExchangeDurable);
 
-        //    // Создадим точку обмена
-        //    model.ExchangeDeclare(exchangeName, exchangeConfig.Type, exchangeConfig.Durable);
+            var queueFullName = $"{exchangeName}:{routingKey}";
 
-        //    var queueFullName = GetQueueFullName(queueConfig, routingKey, exchangeName);
+            // Создадим очередь
+            model.QueueDeclare(queueFullName, this._config.QueueDurable, this._config.QueueExclusive, this._config.QueueAutoDelete, null);
 
-        //    // Создадим очередь
-        //    model.QueueDeclare(queueFullName, queueConfig.Durable, queueConfig.Exclusive, queueConfig.AutoDelete, null);
-
-        //    // Свяжем
-        //    model.QueueBind(queueFullName, exchangeName, routingKey);
-        //}
+            // Свяжем
+            model.QueueBind(queueFullName, exchangeName, routingKey);
+        }
 
         /// <summary>
         ///     Авто получение сообщений

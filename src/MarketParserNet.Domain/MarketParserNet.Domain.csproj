@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Impl\BaseService.cs" />
+    <Compile Include="Impl\BinarySerializer.cs" />
     <Compile Include="Impl\QueueRabbitMq.cs" />
     <Compile Include="Impl\ConfigManagerRabbitMQ.cs" />
     <Compile Include="Impl\ConfigurationRabbitMq.cs" />

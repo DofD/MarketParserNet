@@ -40,5 +40,30 @@
         ///     Интервал переподключения
         /// </summary>
         int ReconnectInterval { get; }
+
+        /// <summary>
+        ///     Имя точки обмена
+        /// </summary>
+        string ExchangeName { get; }
+
+        /// <summary>
+        ///     Постоянная точка обмена
+        /// </summary>
+        bool ExchangeDurable { get; }
+
+        /// <summary>
+        ///     Постоянство очереди
+        /// </summary>
+        bool QueueDurable { get; }
+
+        /// <summary>
+        ///     Эксклюзивность очереди
+        /// </summary>
+        bool QueueExclusive { get; }
+
+        /// <summary>
+        ///     Авто удаление очереди
+        /// </summary>
+        bool QueueAutoDelete { get; }
     }
 }

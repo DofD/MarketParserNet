@@ -57,6 +57,7 @@
     <Compile Include="Impl\ConfigManagerRabbitMQ.cs" />
     <Compile Include="Impl\ConfigurationRabbitMq.cs" />
     <Compile Include="Impl\FileConfigurationRabbitMq.cs" />
+    <Compile Include="Impl\CacheRedis.cs" />
     <Compile Include="Impl\SpiderService.cs" />
     <Compile Include="Impl\IParser.cs" />
     <Compile Include="Impl\ParserService.cs" />

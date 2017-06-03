@@ -51,8 +51,7 @@ namespace MarketParserNet.Domain.Impl
         /// <summary>
         ///     Подписчики
         /// </summary>
-        private readonly ConcurrentDictionary<string, List<Func<QueueMessage, bool>>> _observers =
-            new ConcurrentDictionary<string, List<Func<QueueMessage, bool>>>();
+        private readonly ConcurrentDictionary<string, IConnection> _observers = new ConcurrentDictionary<string, IConnection>();
 
         /// <summary>
         ///     Блокировка подписчиков
@@ -62,7 +61,7 @@ namespace MarketParserNet.Domain.Impl
         /// <summary>
         ///     Соединение
         /// </summary>
-        private IConnection _connection;
+        private readonly IConnection _connection;
 
         /// <summary>
         ///     Флаг очистки ресурсов
@@ -72,7 +71,7 @@ namespace MarketParserNet.Domain.Impl
         /// <summary>
         ///     Модель AMQP
         /// </summary>
-        private IModel _model;
+        private readonly IModel _channel;
 
         /// <summary>
         ///     Сериализатор
@@ -110,7 +109,9 @@ namespace MarketParserNet.Domain.Impl
 
             this._config = configManager.GetConfiguration();
 
-            this.Connect();
+            this._connection = this.Connect();
+
+            this._channel = this.GetСhannel(this._connection);
         }
 
         /// <summary>
@@ -140,7 +141,7 @@ namespace MarketParserNet.Domain.Impl
 
             try
             {
-                var receive = this._model.BasicGet(queueFullName, false);
+                var receive = this._channel.BasicGet(queueFullName, false);
                 if (receive == null)
                 {
                     return null;
@@ -148,7 +149,7 @@ namespace MarketParserNet.Domain.Impl
 
                 var message = this._serializer.Deserialize<QueueMessage>(receive.Body);
 
-                this._model.BasicAck(receive.DeliveryTag, false);
+                this._channel.BasicAck(receive.DeliveryTag, false);
 
                 return message;
             }
@@ -167,7 +168,7 @@ namespace MarketParserNet.Domain.Impl
         public void Enqueue(QueueMessage item, string routingKey)
         {
             // Создадим базовые параметры
-            var basicProperties = this._model.CreateBasicProperties();
+            var basicProperties = this._channel.CreateBasicProperties();
 
             // Говорим что сообщение постоянное
             basicProperties.Persistent = true;
@@ -178,10 +179,10 @@ namespace MarketParserNet.Domain.Impl
                 try
                 {
                     // Инициализируем объекты RabbitMq
-                    this.InitializeRabbitMq(routingKey, this._model, this._config.ExchangeName);
+                    this.InitializeRabbitMq(routingKey, this._channel, this._config.ExchangeName);
 
                     // Публикуем
-                    this._model.BasicPublish(
+                    this._channel.BasicPublish(
                         this._config.ExchangeName,
                         routingKey,
                         basicProperties,
@@ -203,29 +204,35 @@ namespace MarketParserNet.Domain.Impl
         /// <returns>Ссылка на подписку</returns>
         public IDisposable Subscribe(string mask, Func<QueueMessage, bool> observer)
         {
-            if (!this._observers.ContainsKey(mask))
+            var connection = this._observers.GetOrAdd(mask, s => this.Connect());
+            var channel = this.GetСhannel(connection);
+            
+            // Инициализируем объекты RabbitMq
+            this.InitializeRabbitMq(mask, channel, this._config.ExchangeName);
+
+            var consumer = new EventingBasicConsumer(channel);
+            consumer.Received += (model, receive) =>
             {
-                this._observers[mask] = new List<Func<QueueMessage, bool>>();
-            }
-
-            // Добавляем в список подписчиков
-            if (!this._observers[mask].Contains(observer))
-            {
-                this._observersLock.EnterWriteLock();
-                try
+                var message = this._serializer.Deserialize<QueueMessage>(receive.Body);
+                var ask = observer(message);
+                if (ask)
                 {
-                    this._observers[mask].Add(observer);
+                    channel.BasicAck(receive.DeliveryTag, true);
                 }
-                finally
+                else
                 {
-                    this._observersLock.ExitWriteLock();
+                    channel.BasicNack(receive.DeliveryTag, false, true);
                 }
-            }
+            };
 
-            // Включаем автоматическое получение от RabbitMQ
-            this.TurnOnAutoDequeue(mask);
+            channel.BasicConsume(GetQueueFullName(mask, this._config.ExchangeName), false, consumer);
 
-            return new SubscriptionQueue(() => this.Unsubscribe(mask, observer));
+            return new SubscriptionQueue(
+                () =>
+                {
+                    channel.Close();
+                    this.Disconnect(connection);
+                });
         }
 
         /// <summary>
@@ -257,185 +264,41 @@ namespace MarketParserNet.Domain.Impl
         }
 
         /// <summary>
-        ///     Авто получение сообщений
+        ///     Подключиться к очереди
         /// </summary>
-        /// <param name="routingKey">Маска</param>
-        private void AutoDequeue(string routingKey)
+        private IConnection Connect()
         {
-            throw new NotImplementedException();
+            var connection = this.TryToConnect(this._factory, this._config);
 
-            //// Создается параллельное соединение
-            //var configMessage = this.GetConfigurationMessageRabbitMq(typeof(QueueMessage));
-            //var configQueue = configMessage.QueueConfig ?? this._configManager.GetDefaultQueueConfig();
-            //var queueFullName = GetQueueFullName(configQueue, routingKey);
-            //var arg = this._configManager.GetConsumerArgument(routingKey);
+            // Подписываемся на события
+            this.SubscribeToEvents(connection);
 
-            //var lastGetTime = DateTime.MinValue;
-            //EventingBasicConsumer consumer = null;
-            //var consumerTag = Guid.NewGuid().ToString();
-
-            //// сохраняем предыдущую модель так как при переподключение будет создана новая
-            //var model = this._model;
-
-            //// блокируем модель иначе может вызваться исключение при много поточности
-            //lock (this._modelLock)
-            //{
-            //    // Создадим очередь
-            //    model.QueueDeclare(
-            //        queueFullName,
-            //        configQueue.Durable,
-            //        configQueue.Exclusive,
-            //        configQueue.AutoDelete,
-            //        null);
-            //}
-
-            //// Флаг отправки пина
-            //var sendPing = false;
-
-            //// Флаг обработки
-            //var isRun = false;
-
-            //// Таймер нужен, так как иногда потребитель зависает
-            //this._consumerRecreateTimers[routingKey] = new WrapTimer(
-            //    timer =>
-            //    {
-            //        if (isRun)
-            //        {
-            //            return;
-            //        }
-
-            //        if (DateTime.UtcNow - lastGetTime < TimeSpan.FromMilliseconds(this._config.ConsumerRecreateTime)
-            //            && model == this._model)
-            //        {
-            //            return; // Все нормально потребитель не завис
-            //        }
-
-            //        isRun = true;
-
-            //        if (model != this._model)
-            //        {
-            //            consumer = null;
-            //        }
-
-            //        if (consumer != null)
-            //        {
-            //            // Пинг был отправлен, а ответа так и нет
-            //            if (sendPing)
-            //            {
-            //                // Пересоздаем    
-            //                consumer.OnCancel();
-            //                lock (this._modelLock)
-            //                {
-            //                    this._model.BasicCancel(consumerTag);
-            //                }
-
-            //                sendPing = false;
-            //                this._logger.Debug(this, string.Format(Resources.ConsumerRecreateByRoute, routingKey));
-            //            }
-            //            else
-            //            {
-            //                // Отправим пинг
-            //                this.Enqueue(
-            //                    new PingMessage { SendTime = DateTime.UtcNow, CryptoProviderName = configQueue.Name },
-            //                    routingKey);
-
-            //                sendPing = true;
-
-            //                this._logger.Debug(this, string.Format("Отправили пинг на [{0}]", routingKey));
-
-            //                isRun = false;
-            //                return;
-            //            }
-            //        }
-
-            //        lock (this._modelLock) // блокируем модель иначе может вызваться исключение
-            //        {
-            //            consumer = new EventingBasicConsumer(this._model);
-
-            //            try
-            //            {
-            //                IModelExensions.BasicConsume(
-            //                    this._model,
-            //                    queueFullName,
-            //                    (bool)false,
-            //                    consumerTag,
-            //                    (IDictionary<string, object>)arg,
-            //                    (IBasicConsumer)consumer);
-            //            }
-            //            catch (OperationInterruptedException e)
-            //            {
-            //                consumer = null;
-
-            //                this._errorHandler.HandleError(this, e);
-            //                return;
-            //            }
-            //        }
-
-            //        this._logger.Debug(this, string.Format(Resources.SubscribersToRoute, routingKey));
-
-            //        try
-            //        {
-            //            isRun = false; // так как тут получение из очереди идет через ожидание
-
-            //            consumer.Received += (sender, args) =>
-            //            {
-            //                if (this._config.AsParallel)
-            //                {
-            //                    try
-            //                    {
-            //                        ThreadPool.QueueUserWorkItem(
-            //                            state =>
-            //                            {
-            //                                sendPing = false; // Сбрасываем отправку пинг пакета
-            //                                lastGetTime = this.HandleMessage(routingKey, args);
-            //                            });
-            //                    }
-            //                    catch (Exception e)
-            //                    {
-            //                        this._errorHandler.HandleError(this, e);
-            //                        this._model.BasicNack(args.DeliveryTag, false, true);
-            //                    }
-            //                }
-            //                else
-            //                {
-            //                    sendPing = false; // Сбрасываем отправку пинг пакета
-            //                    lastGetTime = this.HandleMessage(routingKey, args);
-            //                }
-            //            };
-            //        }
-            //        catch (Exception e)
-            //        {
-            //            this._errorHandler.HandleError(this, e);
-            //        }
-            //    },
-            //    this._config.ConsumerRecreateTime);
+            return connection;
         }
 
         /// <summary>
-        ///     Подключиться к очереди
+        /// Получить модель
         /// </summary>
-        private void Connect()
+        /// <param name="connection">Соединение</param>
+        /// <returns>Модель</returns>
+        private IModel GetСhannel(IConnection connection)
         {
-            this._connection = this.TryToConnect(this._factory, this._config);
-            this._model = this._connection.CreateModel();
+            var model = connection.CreateModel();
 
-            this._model.BasicQos(0, this._config.PrefetchCount, true);
+            model.BasicQos(0, this._config.PrefetchCount, true);
 
-            // Подписываемся на события
-            this.SubscribeToEvents(this._connection);
+            return model;
         }
 
         /// <summary>
         ///     Отключиться от очереди
         /// </summary>
-        private void Disconnect()
+        /// <param name="connection">Соединение</param>
+        private void Disconnect(IConnection connection)
         {
             // Отписываемся от событий
-            this.UnsubscribeToEvents(this._connection);
-
-            this._model?.Dispose();
-
-            this._connection?.Dispose();
+            this.UnsubscribeToEvents(connection);
+            connection?.Dispose();
         }
 
         /// <summary>
@@ -451,18 +314,13 @@ namespace MarketParserNet.Domain.Impl
 
             if (disposing)
             {
-                this.Disconnect();
+                this._channel?.Dispose();
+                this.Disconnect(this._connection);
 
-                //foreach (var autoDequeueThread in this._autoDequeueThreads)
-                //{
-                //    this.ShutDownAutoDequeue(autoDequeueThread.Key);
-                //}
-
-                //// Завершаем таймеры
-                //foreach (var consumerRecreateTimer in this._consumerRecreateTimers)
-                //{
-                //    consumerRecreateTimer.Value.Dispose();
-                //}
+                foreach (var connection in this._observers.Values)
+                {
+                    connection.Close();
+                }
 
                 this._observersLock.Dispose();
             }
@@ -513,31 +371,6 @@ namespace MarketParserNet.Domain.Impl
         private void OnConnectionUnblocked(object sender, EventArgs eventArgs)
         {
             this._logger.Info("Соединение разблокировано");
-        }
-
-        /// <summary>
-        ///     Выключить автоматическое получение сообщений
-        /// </summary>
-        /// <param name="mask">Маска</param>
-        private void ShutDownAutoDequeue(string mask)
-        {
-            throw new NotImplementedException();
-
-            //if (!this._autoDequeueThreads.ContainsKey(mask))
-            //{
-            //    return;
-            //}
-
-            //lock (this._autoDequeueThreadsLock)
-            //{
-            //    if (this._autoDequeueThreads[mask].IsAlive)
-            //    {
-            //        this._autoDequeueThreads[mask].Abort();
-            //    }
-
-            //    Thread thread;
-            //    this._autoDequeueThreads.TryRemove(mask, out thread);
-            //}
         }
 
         /// <summary>
@@ -594,57 +427,6 @@ namespace MarketParserNet.Domain.Impl
         }
 
         /// <summary>
-        ///     Включить автоматическое получение из очереди
-        /// </summary>
-        /// <param name="mask">Маска</param>
-        private void TurnOnAutoDequeue(string mask)
-        {
-            throw new NotImplementedException();
-
-            //if (!this._autoDequeueThreads.ContainsKey(mask))
-            //{
-            //    this._autoDequeueThreads[mask] = new Thread(() => this.AutoDequeue(mask)) { Name = mask };
-            //}
-
-            //lock (this._autoDequeueThreadsLock)
-            //{
-            //    if (!this._autoDequeueThreads[mask].IsAlive)
-            //    {
-            //        this._autoDequeueThreads[mask].Start();
-            //    }
-            //}
-        }
-
-        /// <summary>
-        ///     Отписаться
-        /// </summary>
-        /// <param name="mask">Маска</param>
-        /// <param name="observer">Подписчик</param>
-        private void Unsubscribe(string mask, Func<QueueMessage, bool> observer)
-        {
-            this._logger.Debug($" --> Unsubscribe {mask}");
-            if (!this._observers.ContainsKey(mask))
-            {
-                this._logger.Debug(" <-- Unsubscribe NoMask");
-                return;
-            }
-
-            this._observersLock.EnterWriteLock();
-            try
-            {
-                this._observers[mask].RemoveAll(s => s == observer);
-            }
-            finally
-            {
-                this._observersLock.ExitWriteLock();
-            }
-
-            this.ShutDownAutoDequeue(mask);
-
-            this._logger.Debug($" <-- Unsubscribe {mask}");
-        }
-
-        /// <summary>
         ///     Отписаться от событий
         /// </summary>
         /// <param name="connection">Соединение</param>
@@ -652,6 +434,8 @@ namespace MarketParserNet.Domain.Impl
         {
             connection.CallbackException -= this.OnCallbackException;
             connection.ConnectionShutdown -= this.OnConnectionShutdown;
+            connection.ConnectionBlocked -= this.OnConnectionBlocked;
+            connection.ConnectionUnblocked -= this.OnConnectionUnblocked;
         }
 
         /// <summary>

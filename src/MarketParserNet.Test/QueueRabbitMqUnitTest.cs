@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 using Castle.Core.Logging;
 
@@ -17,7 +18,7 @@ namespace MarketParserNet.Test
         [TestMethod]
         public void EnqueueTest()
         {
-            var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(),  new NullLogger());
+            var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(), new NullLogger());
             queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = "Тестовое сообщение" }, "Test");
         }
 
@@ -26,6 +27,39 @@ namespace MarketParserNet.Test
         {
             var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(), new NullLogger());
             queue.Dequeue("Test");
+        }
+
+        [TestMethod]
+        public void SubscribeTest()
+        {
+            const int count = 10;
+            var taskItem = new object();
+
+            var queue = new QueueRabbitMq(new ConnectionFactory(), new ConfigManagerRabbitMQ(), new BinarySerializer(), new NullLogger());
+
+            var index = 0;
+            var stop = false;
+            queue.Subscribe("TestSubscribe", message =>
+            {
+                index++;
+
+                if (index == count)
+                    stop = true;
+
+                return true;
+            });
+
+            for (var i = 0; i < count; i++)
+            {
+                queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = $"Тестовое сообщение №{i}" }, "TestSubscribe");
+            }
+
+            while (!stop)
+            {
+                
+            }
+
+            Assert.AreEqual(count, index);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace MarketParserNet.Domain.Impl
     ///     Кеш на основе Redis
     /// </summary>
     /// <typeparam name="T">Тип объекта</typeparam>
-    public class CacheRedis<T> : ICache<string, T>
+    public class CacheRedis<T> : ICache<string, T>, IDisposable
     {
         private readonly IRedisConfig _config;
 
@@ -30,6 +30,8 @@ namespace MarketParserNet.Domain.Impl
         private readonly ISerializer _serializer;
 
         private ConnectionMultiplexer _connection;
+
+        private bool _disposed;
 
         public CacheRedis(
             IConfigManager<IRedisConfig> configManager,
@@ -170,6 +172,33 @@ namespace MarketParserNet.Domain.Impl
         private string GetMd5(T element)
         {
             return this._hashGenerator.GetMd5(element);
+        }
+
+        /// <summary>
+        /// Выполняет определяемые приложением задачи, связанные с удалением, высвобождением или сбросом неуправляемых ресурсов.
+        /// </summary>
+        public void Dispose()
+        {
+            this.Dispose(true);
+        }
+
+        /// <summary>
+        ///     Выполнить определяемые приложением задачи, связанные с высвобождением или сбросом неуправляемых ресурсов
+        /// </summary>
+        /// <param name="disposing">Освобождать</param>
+        private void Dispose(bool disposing)
+        {
+            if (this._disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this._connection?.Dispose();
+            }
+
+            this._disposed = true;
         }
     }
 }

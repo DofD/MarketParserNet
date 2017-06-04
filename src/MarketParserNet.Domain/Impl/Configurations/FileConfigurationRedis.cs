@@ -28,7 +28,7 @@ namespace MarketParserNet.Domain.Impl.Configurations
         /// <summary>
         ///     Строка подключения
         /// </summary>
-        public string ConnectionString => ConfigurationHelper.AppSetting(ConnectionStringKey);
+        public string ConnectionString => ConfigurationHelper.AppSetting(ConnectionStringKey, "localhost");
 
         /// <summary>
         ///     Количество попыток подключения

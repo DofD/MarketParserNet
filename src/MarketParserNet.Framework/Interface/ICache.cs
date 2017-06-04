@@ -18,8 +18,9 @@
         ///     Добавить элемент
         /// </summary>
         /// <param name="element">Элемент</param>
+        /// <param name="ttl">Время жизни в секундах</param>
         /// <returns>Ключ</returns>
-        I Add(T element);
+        I Add(T element, int? ttl = null);
 
         /// <summary>
         ///     Сбросить елемент кеша

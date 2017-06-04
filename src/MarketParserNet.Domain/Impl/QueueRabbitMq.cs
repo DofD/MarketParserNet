@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 using Castle.Core.Logging;
 
 using MarketParserNet.Framework.Interface;
-
-using Newtonsoft.Json;
 
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -23,11 +19,6 @@ namespace MarketParserNet.Domain.Impl
     /// </summary>
     public class QueueRabbitMq : IQueue, IDisposable
     {
-        /// <summary>
-        ///     Объект блокировки потоков авто извлечения
-        /// </summary>
-        private readonly object _autoDequeueThreadsLock = new object();
-
         /// <summary>
         ///     Конфигурация очереди
         /// </summary>

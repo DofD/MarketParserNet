@@ -18,9 +18,56 @@ namespace MarketParserNet.Test
             var hashGenerator = new HashGenerator(new BinarySerializer());
             using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
             {
-                var o = new MockObject();
+                var o = new MockObject { Message = "AddTest" };
 
-                cache.Add(o);
+                cache.Add(o, 10);
+            }
+        }
+
+        [TestMethod]
+        public void GetTest()
+        {
+            var hashGenerator = new HashGenerator(new BinarySerializer());
+            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            {
+                var o = new MockObject { Message = "GetTest" };
+
+                var key = cache.Add(o, 10);
+                var cacheObject = cache.Get(key);
+
+                Assert.AreEqual(o, cacheObject);
+            }
+        }
+
+        [TestMethod]
+        public void ResetTest()
+        {
+            var hashGenerator = new HashGenerator(new BinarySerializer());
+            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            {
+                var o = new MockObject { Message = "ResetTest" };
+
+                var key = cache.Add(o, 10);
+                cache.Reset(key);
+                var cacheObject = cache.Get(key);
+
+                Assert.IsNull(cacheObject);
+            }
+        }
+
+        [TestMethod]
+        public void ClearTest()
+        {
+            var hashGenerator = new HashGenerator(new BinarySerializer());
+            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            {
+                var o = new MockObject { Message = "ClearTest" };
+                var key = cache.Add(o, 10);
+
+                cache.Clear();
+                var cacheObject = cache.Get(key);
+
+                Assert.IsNull(cacheObject);
             }
         }
     }

@@ -57,7 +57,12 @@ namespace MarketParserNet.Domain.Impl
         /// <returns>Элемент кеша</returns>
         public T Get(string id)
         {
-            throw new NotImplementedException();
+            return this.Action<T>(
+                cache =>
+                {
+                    var value = cache.StringGet(id);
+                    return string.IsNullOrWhiteSpace(value) ? default(T) : this._serializer.Deserialize<T>(value);
+                });
         }
 
         /// <summary>
@@ -82,7 +87,7 @@ namespace MarketParserNet.Domain.Impl
         /// <returns>Успех операции</returns>
         public bool Reset(string id)
         {
-            throw new NotImplementedException();
+            return this.Action(cache => cache.KeyDelete(id));
         }
 
         /// <summary>

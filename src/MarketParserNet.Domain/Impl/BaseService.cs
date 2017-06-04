@@ -95,7 +95,7 @@ namespace MarketParserNet.Domain.Impl
 
             if (disposing)
             {
-                this.tokenSource.Dispose();
+                this.tokenSource?.Dispose();
             }
 
             this._disposed = true;

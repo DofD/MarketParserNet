@@ -39,6 +39,23 @@ namespace MarketParserNet.Domain.Impl
             ISerializer serializer,
             ILogger logger)
         {
+            if (configManager == null)
+            {
+                throw new ArgumentNullException(nameof(configManager));
+            }
+            if (hashGenerator == null)
+            {
+                throw new ArgumentNullException(nameof(hashGenerator));
+            }
+            if (serializer == null)
+            {
+                throw new ArgumentNullException(nameof(serializer));
+            }
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             this._hashGenerator = hashGenerator;
             this._logger = logger;
             this._serializer = serializer;
@@ -57,7 +74,7 @@ namespace MarketParserNet.Domain.Impl
         /// <returns>Элемент кеша</returns>
         public T Get(string id)
         {
-            return this.Action<T>(
+            return this.Action(
                 cache =>
                 {
                     var value = cache.StringGet(id);
@@ -81,7 +98,7 @@ namespace MarketParserNet.Domain.Impl
         }
 
         /// <summary>
-        ///     Сбросить елемент кеша
+        ///     Сбросить элемент кеша
         /// </summary>
         /// <param name="id">Идентификатор</param>
         /// <returns>Успех операции</returns>
@@ -96,6 +113,15 @@ namespace MarketParserNet.Domain.Impl
         public void Clear()
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        ///     Выполняет определяемые приложением задачи, связанные с удалением, высвобождением или сбросом неуправляемых
+        ///     ресурсов.
+        /// </summary>
+        public void Dispose()
+        {
+            this.Dispose(true);
         }
 
         private ConnectionMultiplexer GetConnection()
@@ -177,14 +203,6 @@ namespace MarketParserNet.Domain.Impl
         private string GetMd5(T element)
         {
             return this._hashGenerator.GetMd5(element);
-        }
-
-        /// <summary>
-        /// Выполняет определяемые приложением задачи, связанные с удалением, высвобождением или сбросом неуправляемых ресурсов.
-        /// </summary>
-        public void Dispose()
-        {
-            this.Dispose(true);
         }
 
         /// <summary>

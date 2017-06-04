@@ -6,6 +6,8 @@ using MarketParserNet.Bootstrap.Utils;
 using MarketParserNet.Domain.Impl;
 using MarketParserNet.Framework.Interface;
 
+using RabbitMQ.Client;
+
 namespace MarketParserNet.Bootstrap
 {
     public class ServicesInstaller : IWindsorInstaller
@@ -33,6 +35,7 @@ namespace MarketParserNet.Bootstrap
 
             // Регистрируем очередь
             container.Register(Component.For<IQueue>().ImplementedBy<QueueRabbitMq>().LifestyleSingleton());
+            container.Register(Component.For<ConnectionFactory>().ImplementedBy<ConnectionFactory>().LifestyleSingleton());
         }
     }
 }

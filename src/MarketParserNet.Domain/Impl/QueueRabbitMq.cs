@@ -9,9 +9,6 @@ using MarketParserNet.Framework.Interface;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-using ConnectionFactory = RabbitMQ.Client.ConnectionFactory;
-using IConnection = RabbitMQ.Client.IConnection;
-
 namespace MarketParserNet.Domain.Impl
 {
     /// <summary>
@@ -20,9 +17,19 @@ namespace MarketParserNet.Domain.Impl
     public class QueueRabbitMq : IQueue, IDisposable
     {
         /// <summary>
+        ///     Модель AMQP
+        /// </summary>
+        private readonly IModel _channel;
+
+        /// <summary>
         ///     Конфигурация очереди
         /// </summary>
         private readonly IConfigurationRabbitMq _config;
+
+        /// <summary>
+        ///     Соединение
+        /// </summary>
+        private readonly IConnection _connection;
 
         /// <summary>
         ///     Фабрика соединений
@@ -42,7 +49,8 @@ namespace MarketParserNet.Domain.Impl
         /// <summary>
         ///     Подписчики
         /// </summary>
-        private readonly ConcurrentDictionary<string, IConnection> _observers = new ConcurrentDictionary<string, IConnection>();
+        private readonly ConcurrentDictionary<string, IConnection> _observers =
+            new ConcurrentDictionary<string, IConnection>();
 
         /// <summary>
         ///     Блокировка подписчиков
@@ -50,24 +58,14 @@ namespace MarketParserNet.Domain.Impl
         private readonly ReaderWriterLockSlim _observersLock = new ReaderWriterLockSlim();
 
         /// <summary>
-        ///     Соединение
+        ///     Сериализатор
         /// </summary>
-        private readonly IConnection _connection;
+        private readonly ISerializer _serializer;
 
         /// <summary>
         ///     Флаг очистки ресурсов
         /// </summary>
         private bool _disposed;
-
-        /// <summary>
-        ///     Модель AMQP
-        /// </summary>
-        private readonly IModel _channel;
-
-        /// <summary>
-        ///     Сериализатор
-        /// </summary>
-        private readonly ISerializer _serializer;
 
         /// <summary>
         ///     Инициализирует новый экземпляр класса <see cref="QueueRabbitMq" />
@@ -78,7 +76,8 @@ namespace MarketParserNet.Domain.Impl
         /// <param name="logger">Логировщик</param>
         public QueueRabbitMq(
             ConnectionFactory factory,
-            IConfigManager<IConfigurationRabbitMq> configManager, ISerializer serializer,
+            IConfigManager<IConfigurationRabbitMq> configManager,
+            ISerializer serializer,
             ILogger logger)
         {
             if (factory == null)
@@ -111,14 +110,6 @@ namespace MarketParserNet.Domain.Impl
         public void Dispose()
         {
             this.Dispose(true);
-        }
-
-        /// <summary>
-        ///     Уничтожает экземпляр класса <see cref="QueueRabbitMq" />
-        /// </summary>
-        ~QueueRabbitMq()
-        {
-            this.Dispose(false);
         }
 
         /// <summary>
@@ -197,7 +188,7 @@ namespace MarketParserNet.Domain.Impl
         {
             var connection = this._observers.GetOrAdd(mask, s => this.Connect());
             var channel = this.GetСhannel(connection);
-            
+
             // Инициализируем объекты RabbitMq
             this.InitializeRabbitMq(mask, channel, this._config.ExchangeName);
 
@@ -227,15 +218,20 @@ namespace MarketParserNet.Domain.Impl
         }
 
         /// <summary>
+        ///     Уничтожает экземпляр класса <see cref="QueueRabbitMq" />
+        /// </summary>
+        ~QueueRabbitMq()
+        {
+            this.Dispose(false);
+        }
+
+        /// <summary>
         ///     Инициализировать объекты в очереди
         /// </summary>
-        /// <param name = "routingKey" > Путь </param >
-        /// < param name= "model" > Модель AMQP</param>
-        /// <param name = "exchangeName" > Наименование точки расширения</param>
-        private void InitializeRabbitMq(
-            string routingKey,
-            IModel model,
-            string exchangeName)
+        /// <param name="routingKey"> Путь </param>
+        /// < param name="model"> Модель AMQP</param>
+        /// <param name="exchangeName"> Наименование точки расширения</param>
+        private void InitializeRabbitMq(string routingKey, IModel model, string exchangeName)
         {
             // Создадим точку обмена
             model.ExchangeDeclare(exchangeName, ExchangeType.Direct, this._config.ExchangeDurable);
@@ -243,7 +239,12 @@ namespace MarketParserNet.Domain.Impl
             var queueFullName = GetQueueFullName(routingKey, exchangeName);
 
             // Создадим очередь
-            model.QueueDeclare(queueFullName, this._config.QueueDurable, this._config.QueueExclusive, this._config.QueueAutoDelete, null);
+            model.QueueDeclare(
+                queueFullName,
+                this._config.QueueDurable,
+                this._config.QueueExclusive,
+                this._config.QueueAutoDelete,
+                null);
 
             // Свяжем
             model.QueueBind(queueFullName, exchangeName, routingKey);
@@ -268,7 +269,7 @@ namespace MarketParserNet.Domain.Impl
         }
 
         /// <summary>
-        /// Получить модель
+        ///     Получить модель
         /// </summary>
         /// <param name="connection">Соединение</param>
         /// <returns>Модель</returns>

@@ -58,11 +58,13 @@
   <ItemGroup>
     <Compile Include="Impl\BaseService.cs" />
     <Compile Include="Impl\BinarySerializer.cs" />
+    <Compile Include="Impl\Configurations\ConfigManagerRedis.cs" />
+    <Compile Include="Impl\Configurations\FileConfigurationRedis.cs" />
     <Compile Include="Impl\HashGenerator.cs" />
     <Compile Include="Impl\QueueRabbitMq.cs" />
-    <Compile Include="Impl\ConfigManagerRabbitMQ.cs" />
-    <Compile Include="Impl\ConfigurationRabbitMq.cs" />
-    <Compile Include="Impl\FileConfigurationRabbitMq.cs" />
+    <Compile Include="Impl\Configurations\ConfigManagerRabbitMQ.cs" />
+    <Compile Include="Impl\Configurations\ConfigurationRabbitMq.cs" />
+    <Compile Include="Impl\Configurations\FileConfigurationRabbitMq.cs" />
     <Compile Include="Impl\CacheRedis.cs" />
     <Compile Include="Impl\SpiderService.cs" />
     <Compile Include="Impl\IParser.cs" />

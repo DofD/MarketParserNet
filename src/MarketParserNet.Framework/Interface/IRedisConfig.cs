@@ -8,16 +8,16 @@
         /// <summary>
         /// Строка подключения
         /// </summary>
-        string ConnectionString { get; set; }
+        string ConnectionString { get; }
 
         /// <summary>
         /// Количество попыток подключения
         /// </summary>
-        int RetryCount { get; set; }
+        int RetryCount { get; }
 
         /// <summary>
         /// Интервал переподключения
         /// </summary>
-        int ReconnectInterval { get; set; }
+        int ReconnectInterval { get; }
     }
 }

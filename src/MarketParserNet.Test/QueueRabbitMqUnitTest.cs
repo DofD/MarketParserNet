@@ -4,6 +4,7 @@ using System.Threading;
 using Castle.Core.Logging;
 
 using MarketParserNet.Domain.Impl;
+using MarketParserNet.Domain.Impl.Configurations;
 using MarketParserNet.Framework.Interface;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;

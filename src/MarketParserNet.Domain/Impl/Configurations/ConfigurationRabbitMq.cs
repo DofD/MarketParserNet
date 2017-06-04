@@ -1,9 +1,9 @@
 ﻿using MarketParserNet.Framework.Interface;
 
-namespace MarketParserNet.Domain.Impl
+namespace MarketParserNet.Domain.Impl.Configurations
 {
     /// <summary>
-    /// Конфигурация RabbitMq
+    ///     Конфигурация RabbitMq
     /// </summary>
     public class ConfigurationRabbitMq : IConfigurationRabbitMq
     {

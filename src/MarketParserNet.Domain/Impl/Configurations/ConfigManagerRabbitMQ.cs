@@ -1,8 +1,6 @@
-﻿using System;
+﻿using MarketParserNet.Framework.Interface;
 
-using MarketParserNet.Framework.Interface;
-
-namespace MarketParserNet.Domain.Impl
+namespace MarketParserNet.Domain.Impl.Configurations
 {
     /// <summary>
     ///     Менеджер конфигурации RabbitMQ

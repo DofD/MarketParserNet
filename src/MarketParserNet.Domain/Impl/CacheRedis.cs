@@ -18,20 +18,24 @@ namespace MarketParserNet.Domain.Impl
         private readonly IRedisConfig _config;
 
         /// <summary>
-        ///     Сериализатор
-        /// </summary>
-        private readonly ISerializer _serializer;
-
-        /// <summary>
         ///     Генератор хеш суммы
         /// </summary>
         private readonly IHashGenerator _hashGenerator;
 
         private readonly ILogger _logger;
 
+        /// <summary>
+        ///     Сериализатор
+        /// </summary>
+        private readonly ISerializer _serializer;
+
         private ConnectionMultiplexer _connection;
 
-        public CacheRedis(IHashGenerator hashGenerator, IConfigManager<IRedisConfig> configManager, ISerializer serializer, ILogger logger)
+        public CacheRedis(
+            IConfigManager<IRedisConfig> configManager,
+            IHashGenerator hashGenerator,
+            ISerializer serializer,
+            ILogger logger)
         {
             this._hashGenerator = hashGenerator;
             this._logger = logger;

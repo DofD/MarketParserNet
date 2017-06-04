@@ -14,11 +14,11 @@ namespace MarketParserNet.Domain.Impl
     {
         protected readonly ILogger _logger;
 
+        protected bool _disposed;
+
         private Task task;
 
         private CancellationTokenSource tokenSource;
-
-        protected bool _disposed;
 
         protected BaseService(ILogger logger)
         {
@@ -96,7 +96,6 @@ namespace MarketParserNet.Domain.Impl
             if (disposing)
             {
                 this.tokenSource.Dispose();
-
             }
 
             this._disposed = true;

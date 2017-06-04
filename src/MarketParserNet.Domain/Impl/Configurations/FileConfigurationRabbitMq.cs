@@ -1,7 +1,7 @@
 using MarketParserNet.Framework.Interface;
 using MarketParserNet.Utils;
 
-namespace MarketParserNet.Domain.Impl
+namespace MarketParserNet.Domain.Impl.Configurations
 {
     /// <summary>
     ///     Конфигурация очереди app.config

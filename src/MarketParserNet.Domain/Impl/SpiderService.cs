@@ -15,7 +15,7 @@ namespace MarketParserNet.Domain.Impl
             : base(logger)
         {
             this._queue = queue;
-        }
+        }       
 
         /// <summary>
         ///     Действие сервиса

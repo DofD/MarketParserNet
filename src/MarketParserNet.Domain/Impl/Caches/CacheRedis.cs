@@ -92,9 +92,19 @@ namespace MarketParserNet.Domain.Impl
         {
             var key = this.GetMd5(element);
 
-            this.AddOrUpdate(key, element, ttl);
-
+            this.Add(key, element, ttl);
             return key;
+        }
+
+        /// <summary>
+        ///     Добавить новый элемент
+        /// </summary>
+        /// <param name="key">Ключ</param>
+        /// <param name="element">Элемент</param>
+        /// <param name="ttl">Время жизни в секундах</param>
+        public void Add(string key, T element, int? ttl = null)
+        {
+            this.AddOrUpdate(key, element, ttl);
         }
 
         /// <summary>
@@ -122,6 +132,14 @@ namespace MarketParserNet.Domain.Impl
         public void Dispose()
         {
             this.Dispose(true);
+        }
+
+        /// <summary>
+        ///     Деструктор
+        /// </summary>
+        ~CacheRedis()
+        {
+            this.Dispose(false);
         }
 
         private ConnectionMultiplexer GetConnection()

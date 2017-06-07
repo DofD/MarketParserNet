@@ -23,6 +23,14 @@
         I Add(T element, int? ttl = null);
 
         /// <summary>
+        /// Добавить новый элемент
+        /// </summary>
+        /// <param name="key">Ключ</param>
+        /// <param name="element">Элемент</param>
+        /// <param name="ttl">Время жизни в секундах</param>
+        void Add(I key, T element, int? ttl = null);
+
+        /// <summary>
         ///     Сбросить елемент кеша
         /// </summary>
         /// <param name="id">Ключ</param>

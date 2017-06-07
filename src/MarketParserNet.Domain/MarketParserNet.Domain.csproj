@@ -48,6 +48,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -58,6 +59,9 @@
   <ItemGroup>
     <Compile Include="Impl\BaseService.cs" />
     <Compile Include="Impl\BinarySerializer.cs" />
+    <Compile Include="Impl\Caches\CacheBase.cs" />
+    <Compile Include="Impl\Caches\CacheMemory.cs" />
+    <Compile Include="Impl\Caches\CacheProvider.cs" />
     <Compile Include="Impl\Configurations\ConfigManagerRedis.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationRedis.cs" />
     <Compile Include="Impl\HashGenerator.cs" />
@@ -65,7 +69,7 @@
     <Compile Include="Impl\Configurations\ConfigManagerRabbitMQ.cs" />
     <Compile Include="Impl\Configurations\ConfigurationRabbitMq.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationRabbitMq.cs" />
-    <Compile Include="Impl\CacheRedis.cs" />
+    <Compile Include="Impl\Caches\CacheRedis.cs" />
     <Compile Include="Impl\SpiderService.cs" />
     <Compile Include="Impl\IParser.cs" />
     <Compile Include="Impl\ParserService.cs" />

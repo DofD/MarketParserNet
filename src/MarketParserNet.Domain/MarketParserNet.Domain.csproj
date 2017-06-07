@@ -63,6 +63,7 @@
     <Compile Include="Impl\Caches\CacheMemory.cs" />
     <Compile Include="Impl\Caches\CacheProvider.cs" />
     <Compile Include="Impl\Configurations\ConfigManagerRedis.cs" />
+    <Compile Include="Impl\Configurations\ConfigManagerSpiderService.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationRedis.cs" />
     <Compile Include="Impl\HashGenerator.cs" />
     <Compile Include="Impl\QueueRabbitMq.cs" />

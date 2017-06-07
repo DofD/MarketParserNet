@@ -48,9 +48,11 @@
     <Compile Include="Interface\IParserService.cs" />
     <Compile Include="Interface\IQueue.cs" />
     <Compile Include="Interface\IRedisConfig.cs" />
+    <Compile Include="Interface\IRepository.cs" />
     <Compile Include="Interface\ISerializer.cs" />
     <Compile Include="Interface\IService.cs" />
     <Compile Include="Interface\ISpiderService.cs" />
+    <Compile Include="Interface\ISpiderServiceConfig.cs" />
     <Compile Include="Interface\QueueMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

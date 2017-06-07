@@ -34,6 +34,7 @@ namespace MarketParserNet.Bootstrap
                     .ImplementedBy(typeof(CacheProvider<>))
                     .DependsOn(Dependency.OnComponent("cacheFirst", "FirstCache"))
                     .DependsOn(Dependency.OnComponent("cacheSecond", "SecondCache"))
+                    .IsDefault()
                     .LifestyleSingleton());
         }
     }

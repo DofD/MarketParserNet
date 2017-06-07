@@ -3,7 +3,7 @@ using System.Runtime.Caching;
 
 using MarketParserNet.Framework.Interface;
 
-namespace MarketParserNet.Domain.Impl
+namespace MarketParserNet.Domain.Impl.Caches
 {
     public class CacheMemory<T> : CacheBase<T>
     {

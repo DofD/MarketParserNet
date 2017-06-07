@@ -3,6 +3,7 @@
 using Castle.Core.Logging;
 
 using MarketParserNet.Domain.Impl;
+using MarketParserNet.Domain.Impl.Caches;
 using MarketParserNet.Domain.Impl.Configurations;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;

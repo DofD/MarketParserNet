@@ -2,7 +2,7 @@ using System;
 
 using MarketParserNet.Framework.Interface;
 
-namespace MarketParserNet.Domain.Impl
+namespace MarketParserNet.Domain.Impl.Caches
 {
     public abstract class CacheBase<T> : ICache<string, T>, IDisposable
     {

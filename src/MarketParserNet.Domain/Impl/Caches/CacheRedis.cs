@@ -7,7 +7,7 @@ using MarketParserNet.Framework.Interface;
 
 using StackExchange.Redis;
 
-namespace MarketParserNet.Domain.Impl
+namespace MarketParserNet.Domain.Impl.Caches
 {
     /// <summary>
     ///     Кеш на основе Redis

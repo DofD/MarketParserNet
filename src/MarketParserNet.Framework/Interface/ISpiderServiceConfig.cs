@@ -18,6 +18,6 @@
         /// <summary>
         /// Очередь для получения ссылок
         /// </summary>
-        string QueueLinkPath { get; set; }
+        string QueueLinkPath { get; }
     }
 }

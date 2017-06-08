@@ -62,12 +62,10 @@
     <Compile Include="Impl\Caches\CacheBase.cs" />
     <Compile Include="Impl\Caches\CacheMemory.cs" />
     <Compile Include="Impl\Caches\CacheProvider.cs" />
-    <Compile Include="Impl\Configurations\ConfigManagerRedis.cs" />
-    <Compile Include="Impl\Configurations\ConfigManagerSpiderService.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationRedis.cs" />
+    <Compile Include="Impl\Configurations\FileConfigurationSpiderService.cs" />
     <Compile Include="Impl\HashGenerator.cs" />
     <Compile Include="Impl\QueueRabbitMq.cs" />
-    <Compile Include="Impl\Configurations\ConfigManagerRabbitMQ.cs" />
     <Compile Include="Impl\Configurations\ConfigurationRabbitMq.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationRabbitMq.cs" />
     <Compile Include="Impl\Caches\CacheRedis.cs" />

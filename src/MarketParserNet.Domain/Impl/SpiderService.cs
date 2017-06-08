@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 using Castle.Core.Logging;
 
@@ -18,15 +19,29 @@ namespace MarketParserNet.Domain.Impl
         private int _curentIndex;
 
         public SpiderService(
-            IConfigManager<ISpiderServiceConfig> configManager,
+            ISpiderServiceConfig config,
             IQueue queue,
             ICache<string, string> chache,
             ILogger logger)
             : base(logger)
         {
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            if (queue == null)
+            {
+                throw new ArgumentNullException(nameof(queue));
+            }
+            if (chache == null)
+            {
+                throw new ArgumentNullException(nameof(chache));
+            }
+
             this._queue = queue;
             this._chache = chache;
-            this._config = configManager.GetConfiguration();
+            this._config = config;
         }
 
         /// <summary>

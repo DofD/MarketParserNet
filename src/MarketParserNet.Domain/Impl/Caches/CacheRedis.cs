@@ -34,14 +34,14 @@ namespace MarketParserNet.Domain.Impl.Caches
         private bool _disposed;
 
         public CacheRedis(
-            IConfigManager<IRedisConfig> configManager,
+            IRedisConfig config,
             IHashGenerator hashGenerator,
             ISerializer serializer,
             ILogger logger)
         {
-            if (configManager == null)
+            if (config == null)
             {
-                throw new ArgumentNullException(nameof(configManager));
+                throw new ArgumentNullException(nameof(config));
             }
             if (hashGenerator == null)
             {
@@ -59,7 +59,7 @@ namespace MarketParserNet.Domain.Impl.Caches
             this._hashGenerator = hashGenerator;
             this._logger = logger;
             this._serializer = serializer;
-            this._config = configManager.GetConfiguration();
+            this._config = config;
         }
 
         /// <summary>

@@ -18,11 +18,16 @@ namespace MarketParserNet.Bootstrap
         {
             // Регистрируем конфигуратор очереди
             container.Register(
-               Component.For<IConfigManager<IConfigurationRabbitMq>>().ImplementedBy<ConfigManagerRabbitMQ>().LifestyleSingleton());
+               Component.For<IConfigurationRabbitMq>().ImplementedBy<FileConfigurationRabbitMq>().LifestyleSingleton());
 
             // Регистрируем конфигуратор кеша
             container.Register(
-               Component.For<IConfigManager<IRedisConfig>>().ImplementedBy<ConfigManagerRedis>().LifestyleSingleton());
+               Component.For<IRedisConfig>().ImplementedBy<FileConfigurationRedis>().LifestyleSingleton());
+
+            // Регистрируем конфигуратор паука
+            container.Register(
+               Component.For<ISpiderServiceConfig>().ImplementedBy<FileConfigurationSpiderService>().LifestyleSingleton());
+
         }
     }
 }

@@ -6,7 +6,7 @@ namespace MarketParserNet.Domain.Impl.Configurations
     /// <summary>
     ///     Конфигурация очереди app.config
     /// </summary>
-    internal class FileConfigurationRabbitMq : IConfigurationRabbitMq
+    public class FileConfigurationRabbitMq : IConfigurationRabbitMq
     {
         // TODO выделить конфигурацию очереди в отдельную секцию
 

@@ -71,12 +71,12 @@ namespace MarketParserNet.Domain.Impl
         ///     Инициализирует новый экземпляр класса <see cref="QueueRabbitMq" />
         /// </summary>
         /// <param name="factory">Фабрика подключения</param>
-        /// <param name="configManager">Менеджер конфигурации</param>
+        /// <param name="config">Конфигурация</param>
         /// <param name="serializer">Сериализатор</param>
         /// <param name="logger">Логировщик</param>
         public QueueRabbitMq(
             ConnectionFactory factory,
-            IConfigManager<IConfigurationRabbitMq> configManager,
+            IConfigurationRabbitMq config,
             ISerializer serializer,
             ILogger logger)
         {
@@ -84,9 +84,9 @@ namespace MarketParserNet.Domain.Impl
             {
                 throw new ArgumentNullException(nameof(factory));
             }
-            if (configManager == null)
+            if (config == null)
             {
-                throw new ArgumentNullException(nameof(configManager));
+                throw new ArgumentNullException(nameof(config));
             }
             if (logger == null)
             {
@@ -97,7 +97,7 @@ namespace MarketParserNet.Domain.Impl
             this._logger = logger;
             this._serializer = serializer;
 
-            this._config = configManager.GetConfiguration();
+            this._config = config;
 
             this._connection = this.Connect();
 

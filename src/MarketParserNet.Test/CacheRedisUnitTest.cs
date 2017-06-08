@@ -17,7 +17,7 @@ namespace MarketParserNet.Test
         public void AddTest()
         {
             var hashGenerator = new HashGenerator(new BinarySerializer());
-            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            using (var cache = new CacheRedis<MockObject>(new FileConfigurationRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
             {
                 var o = new MockObject { Message = "AddTest" };
 
@@ -29,7 +29,7 @@ namespace MarketParserNet.Test
         public void GetTest()
         {
             var hashGenerator = new HashGenerator(new BinarySerializer());
-            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            using (var cache = new CacheRedis<MockObject>(new FileConfigurationRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
             {
                 var o = new MockObject { Message = "GetTest" };
 
@@ -44,7 +44,7 @@ namespace MarketParserNet.Test
         public void ResetTest()
         {
             var hashGenerator = new HashGenerator(new BinarySerializer());
-            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            using (var cache = new CacheRedis<MockObject>(new FileConfigurationRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
             {
                 var o = new MockObject { Message = "ResetTest" };
 
@@ -60,7 +60,7 @@ namespace MarketParserNet.Test
         public void ClearTest()
         {
             var hashGenerator = new HashGenerator(new BinarySerializer());
-            using (var cache = new CacheRedis<MockObject>(new ConfigManagerRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
+            using (var cache = new CacheRedis<MockObject>(new FileConfigurationRedis(), hashGenerator, new BinarySerializer(), new NullLogger()))
             {
                 var o = new MockObject { Message = "ClearTest" };
                 var key = cache.Add(o, 10);

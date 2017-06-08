@@ -3,7 +3,6 @@ using System.Threading;
 
 using Castle.Core.Logging;
 
-using MarketParserNet.Framework;
 using MarketParserNet.Framework.Interface;
 
 namespace MarketParserNet.Domain.Impl

@@ -16,8 +16,6 @@ namespace MarketParserNet.Domain.Impl
 
         protected bool _disposed;
 
-        private Task task;
-
         private CancellationTokenSource tokenSource;
 
         protected BaseService(ILogger logger)
@@ -28,7 +26,7 @@ namespace MarketParserNet.Domain.Impl
         /// <summary>
         ///     Сервис остановлен
         /// </summary>
-        public bool Stopped { get; private set; }
+        public bool Stopped { get; private set; } = true;
 
         /// <summary>
         ///     Выполняет определяемые приложением задачи, связанные с удалением, высвобождением или сбросом неуправляемых
@@ -50,7 +48,7 @@ namespace MarketParserNet.Domain.Impl
                 // Запускаем действие
                 this.tokenSource = new CancellationTokenSource();
                 var token = this.tokenSource.Token;
-                this.task = Task.Run(() => this.ServiceAction(), token);
+                Task.Run(() => this.ServiceAction(), token);
                 this.Stopped = false;
             }
             this._logger.Debug(" <-- Start");

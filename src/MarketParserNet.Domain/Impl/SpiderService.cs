@@ -1,4 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 using Castle.Core.Logging;
@@ -17,11 +21,7 @@ namespace MarketParserNet.Domain.Impl
 
         private int _curentIndex;
 
-        public SpiderService(
-            ISpiderServiceConfig config,
-            IQueue queue,
-            ICache<string> chache,
-            ILogger logger)
+        public SpiderService(ISpiderServiceConfig config, IQueue queue, ICache<string> chache, ILogger logger)
             : base(logger)
         {
             if (config == null)
@@ -79,6 +79,7 @@ namespace MarketParserNet.Domain.Impl
                 this._logger.Debug($"Обрабатываем ссылку [{message.Message}]");
 
                 this.HandleLink(message.Message);
+                this._chache.Add(message.Message);
             }
             else
             {
@@ -99,9 +100,68 @@ namespace MarketParserNet.Domain.Impl
             return true;
         }
 
-        private void HandleLink(string message)
+        private void HandleLink(string address)
         {
-            //TODO Поиск ссылок
+            const string pattern = @"href\s*=('[^']*')";
+            
+            if (!address.StartsWith(this._config.StartLink))
+            {
+                // Обрабатываем только указаный сайт
+                return;
+            }
+
+            string baseUrl;
+            var page = GetPage(address, out baseUrl);
+            if (string.IsNullOrEmpty(page))
+            {
+                return;
+            }
+
+            var rgx = new Regex(pattern);
+
+            foreach (Match match in rgx.Matches(page))
+            {
+                var link = Regex.Replace(match.ToString(), @"href\s*='([^']*)'", @"$1", RegexOptions.IgnoreCase);
+
+                link = link.StartsWith("http") ? link : $"{baseUrl}{link}";
+                _logger.Debug($"Получили ссылку [{link}]");
+
+                var value = this._chache.Get(link);
+                if (value == null)
+                {
+                    var message = new QueueMessage { Id = Guid.NewGuid(), Message = link };
+
+                    this._queue.Enqueue(message, this._config.QueueLinkPath);
+                    this._queue.Enqueue(message, "ParseLink");
+                }
+            }
+        }
+
+        private static string GetPage(string address, out string baseUrl)
+        {
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create(address);
+                var stream = request.GetResponse().GetResponseStream();
+                string html = null;
+                using (stream)
+                {
+                    // Указали, что из потока нужно читать в кодировке windows-1251
+                    if (stream != null)
+                        using (var reader = new StreamReader(stream, Encoding.GetEncoding(1251)))
+                        {
+                            html = reader.ReadToEnd();
+                        }
+                }
+
+                baseUrl = request.Address.Scheme + "://" + request.Address.Authority + "/";
+                return html;
+            }
+            catch (Exception exception)
+            {
+                baseUrl = null;
+                return null;
+            }
         }
     }
 }

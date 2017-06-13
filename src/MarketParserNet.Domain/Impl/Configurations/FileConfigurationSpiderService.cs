@@ -21,6 +21,6 @@ namespace MarketParserNet.Domain.Impl.Configurations
         /// <summary>
         /// Очередь для получения ссылок
         /// </summary>
-        public string QueueLinkPath => ConfigurationHelper.AppSetting("SpiderStartLink");
+        public string QueueLinkPath => ConfigurationHelper.AppSetting("SpiderQueueLinkPath");
     }
 }

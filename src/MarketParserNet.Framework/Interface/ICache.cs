@@ -1,6 +1,15 @@
 ﻿namespace MarketParserNet.Framework.Interface
 {
     /// <summary>
+    ///     Интерфейс кеша со строковым ключем
+    /// </summary>
+    /// <typeparam name="T">Тип кеша</typeparam>
+    public interface ICache<T> : ICache<string, T>
+    {
+        
+    }
+
+    /// <summary>
     ///     Интерфейс кеша
     /// </summary>
     /// <typeparam name="I">Ключ</typeparam>

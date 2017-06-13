@@ -7,13 +7,13 @@ namespace MarketParserNet.Domain.Impl.Caches
     public class CacheProvider<T> : CacheBase<T>
         where T : class
     {
-        private readonly ICache<string, T> _cacheFirst;
+        private readonly ICache<T> _cacheFirst;
 
-        private readonly ICache<string, T> _cacheSecond;
+        private readonly ICache<T> _cacheSecond;
 
         private bool _disposed;
 
-        public CacheProvider(IHashGenerator hashGenerator, ICache<string, T> cacheFirst, ICache<string, T> cacheSecond)
+        public CacheProvider(IHashGenerator hashGenerator, ICache<T> cacheFirst, ICache<T> cacheSecond)
             : base(hashGenerator)
         {
             this._cacheFirst = cacheFirst;

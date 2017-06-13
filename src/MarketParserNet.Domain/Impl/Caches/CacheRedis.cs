@@ -13,7 +13,7 @@ namespace MarketParserNet.Domain.Impl.Caches
     ///     Кеш на основе Redis
     /// </summary>
     /// <typeparam name="T">Тип объекта</typeparam>
-    public class CacheRedis<T> : ICache<string, T>, IDisposable
+    public class CacheRedis<T> : ICache<T>, IDisposable
     {
         private readonly IRedisConfig _config;
 

@@ -9,7 +9,7 @@ namespace MarketParserNet.Domain.Impl
 {
     public class SpiderService : BaseService, ISpiderService
     {
-        private readonly ICache<string, string> _chache;
+        private readonly ICache<string> _chache;
 
         private readonly ISpiderServiceConfig _config;
 
@@ -20,7 +20,7 @@ namespace MarketParserNet.Domain.Impl
         public SpiderService(
             ISpiderServiceConfig config,
             IQueue queue,
-            ICache<string, string> chache,
+            ICache<string> chache,
             ILogger logger)
             : base(logger)
         {

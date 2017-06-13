@@ -4,7 +4,7 @@ using MarketParserNet.Framework.Interface;
 
 namespace MarketParserNet.Domain.Impl.Caches
 {
-    public abstract class CacheBase<T> : ICache<string, T>, IDisposable
+    public abstract class CacheBase<T> : ICache<T>, IDisposable
     {
         /// <summary>
         ///     Генератор хеш суммы

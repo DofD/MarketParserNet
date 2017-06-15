@@ -122,8 +122,7 @@
 
             foreach (var href in GetHrefs(page).Where(h => h.StartsWith("http") || h.StartsWith("/") || h != this._config.StartLink))
             {
-                var link = href.TrimEnd('/');
-                link = link.StartsWith("http") ? link : $"{this._config.StartLink}{link}";
+                var link = href.StartsWith("http") ? href : $"{this._config.StartLink}{href}";
 
                 var addedKey = $"AddedQueue-{link}";
                 var value = this._chache.Get(addedKey);

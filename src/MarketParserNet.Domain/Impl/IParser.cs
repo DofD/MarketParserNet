@@ -10,6 +10,11 @@ namespace MarketParserNet.Domain.Impl
     public interface IParser
     {
         /// <summary>
+        ///     Имя сайта
+        /// </summary>
+        string SiteName { get; }
+
+        /// <summary>
         ///     Парсить страницы начиная с
         /// </summary>
         /// <param name="webPages">Набор начальных страниц</param>

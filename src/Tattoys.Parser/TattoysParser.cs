@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 
 using MarketParserNet.Domain.Impl;
@@ -10,6 +9,11 @@ namespace Tattoys.Parser
 {
     public class TattoysParser : IParser
     {
+        /// <summary>
+        ///     Имя сайта
+        /// </summary>
+        public string SiteName => "tattoys.ru";
+
         /// <summary>
         ///     Парсить страницы начиная с
         /// </summary>

@@ -1,16 +1,19 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-
-using Castle.Core.Logging;
-
-using MarketParserNet.Framework.Interface;
-
-namespace MarketParserNet.Domain.Impl
+﻿namespace MarketParserNet.Domain.Impl
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Text;
+    using System.Threading;
+
+    using AngleSharp.Parser.Html;
+
+    using Castle.Core.Logging;
+
+    using Framework.Interface;
+
     public class SpiderService : BaseService, ISpiderService
     {
         private readonly ICache<string> _chache;
@@ -78,8 +81,8 @@ namespace MarketParserNet.Domain.Impl
             {
                 this._logger.Debug($"Обрабатываем ссылку [{message.Message}]");
 
+                this._chache.Add(message.Message, message.Message);
                 this.HandleLink(message.Message);
-                this._chache.Add(message.Message);
             }
             else
             {
@@ -102,64 +105,71 @@ namespace MarketParserNet.Domain.Impl
 
         private void HandleLink(string address)
         {
-            const string pattern = @"href\s*=('[^']*')";
-            
             if (!address.StartsWith(this._config.StartLink))
             {
                 // Обрабатываем только указаный сайт
                 return;
             }
 
-            string baseUrl;
-            var page = GetPage(address, out baseUrl);
+            var page = GetPage(address);
             if (string.IsNullOrEmpty(page))
             {
                 return;
             }
 
-            var rgx = new Regex(pattern);
+            // Добавляем страницу в очередь парсинга
+            this._queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = page }, this._config.QueueParsePage);
 
-            foreach (Match match in rgx.Matches(page))
+            foreach (var href in GetHrefs(page).Where(h => h.StartsWith("http") || h.StartsWith("/") || h != this._config.StartLink))
             {
-                var link = Regex.Replace(match.ToString(), @"href\s*='([^']*)'", @"$1", RegexOptions.IgnoreCase);
+                var link = href.TrimEnd('/');
+                link = link.StartsWith("http") ? link : $"{this._config.StartLink}{link}";
 
-                link = link.StartsWith("http") ? link : $"{baseUrl}{link}";
-                _logger.Debug($"Получили ссылку [{link}]");
-
-                var value = this._chache.Get(link);
+                var addedKey = $"AddedQueue-{link}";
+                var value = this._chache.Get(addedKey);
                 if (value == null)
                 {
-                    var message = new QueueMessage { Id = Guid.NewGuid(), Message = link };
+                    _logger.Debug($"Добавили ссылку [{link}]");
+                    this._queue.Enqueue(new QueueMessage { Id = Guid.NewGuid(), Message = link }, this._config.QueueLinkPath);
 
-                    this._queue.Enqueue(message, this._config.QueueLinkPath);
-                    this._queue.Enqueue(message, "ParseLink");
+                    this._chache.Add(addedKey, link);
                 }
             }
         }
 
-        private static string GetPage(string address, out string baseUrl)
+        private static IEnumerable<string> GetHrefs(string page)
+        {
+            var parser = new HtmlParser();
+            var document = parser.Parse(page);
+
+            return document.QuerySelectorAll("a").Select(element => element.GetAttribute("href")).ToList();
+        }
+
+        private static string GetPage(string address)
         {
             try
             {
-                var request = (HttpWebRequest)WebRequest.Create(address);
-                var stream = request.GetResponse().GetResponseStream();
+                var client = new WebClient();
+                client.Headers.Add(
+                    "user-agent",
+                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+
+                var data = client.OpenRead(address);
+
                 string html = null;
-                using (stream)
+
+                if (data != null)
                 {
-                    // Указали, что из потока нужно читать в кодировке windows-1251
-                    if (stream != null)
-                        using (var reader = new StreamReader(stream, Encoding.GetEncoding(1251)))
-                        {
-                            html = reader.ReadToEnd();
-                        }
+                    using (var reader = new StreamReader(data))
+                    {
+                        html = reader.ReadToEnd();
+                    }
                 }
 
-                baseUrl = request.Address.Scheme + "://" + request.Address.Authority + "/";
                 return html;
             }
             catch (Exception exception)
             {
-                baseUrl = null;
                 return null;
             }
         }

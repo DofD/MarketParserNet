@@ -38,6 +38,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Castle.Core.3.3.3\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Dapper, Version=1.50.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapper.1.50.2\lib\net451\Dapper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -50,6 +54,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Runtime.Caching" />
@@ -66,8 +71,10 @@
     <Compile Include="Impl\Caches\CacheBase.cs" />
     <Compile Include="Impl\Caches\CacheMemory.cs" />
     <Compile Include="Impl\Caches\CacheProvider.cs" />
+    <Compile Include="Impl\Configurations\FileConfigurationParserService.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationRedis.cs" />
     <Compile Include="Impl\Configurations\FileConfigurationSpiderService.cs" />
+    <Compile Include="Impl\DataAccess\ProductRepository.cs" />
     <Compile Include="Impl\HashGenerator.cs" />
     <Compile Include="Impl\QueueRabbitMq.cs" />
     <Compile Include="Impl\Configurations\ConfigurationRabbitMq.cs" />

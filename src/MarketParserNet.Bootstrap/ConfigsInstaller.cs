@@ -7,7 +7,7 @@ using MarketParserNet.Framework.Interface;
 
 namespace MarketParserNet.Bootstrap
 {
-    public class ConfigManagersInstaller : IWindsorInstaller
+    public class ConfigsInstaller : IWindsorInstaller
     {
         /// <summary>
         ///     Инсталлировать в контейнер все необходимые элементы службы
@@ -28,6 +28,9 @@ namespace MarketParserNet.Bootstrap
             container.Register(
                Component.For<ISpiderServiceConfig>().ImplementedBy<FileConfigurationSpiderService>().LifestyleSingleton());
 
+            // Регистрируем конфигуратор парсера
+            container.Register(
+               Component.For<IParserServiceConfig>().ImplementedBy<FileConfigurationParserService>().LifestyleSingleton());
         }
     }
 }

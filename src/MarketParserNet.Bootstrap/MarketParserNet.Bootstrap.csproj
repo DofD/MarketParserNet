@@ -65,7 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheInstaller.cs" />
-    <Compile Include="ConfigManagersInstaller.cs" />
+    <Compile Include="ConfigsInstaller.cs" />
     <Compile Include="SerializerInstaller.cs" />
     <Compile Include="Utils\PathUtil.cs" />
     <Compile Include="ServicesInstaller.cs" />

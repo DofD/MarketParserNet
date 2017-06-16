@@ -1,18 +1,24 @@
 ﻿using System;
 
-using Castle.Core.Logging;
-using Castle.Windsor;
-using Castle.Windsor.Installer;
-
 using MarketParserNet.Framework.Interface;
 
 namespace MarketParserNet.Console
 {
+    using Castle.Core.Logging;
+    using Castle.MicroKernel.Resolvers.SpecializedResolvers;
+    using Castle.Windsor;
+    using Castle.Windsor.Installer;
+
     internal class Program
     {
         private static readonly IWindsorContainer Container = new WindsorContainer();
 
         private static ILogger Logger;
+
+        static Program()
+        {
+            Container.Kernel.Resolver.AddSubResolver(new ArrayResolver(Container.Kernel));
+        }
 
         private static void Main(string[] args)
         {

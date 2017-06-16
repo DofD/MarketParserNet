@@ -4,10 +4,12 @@ using MarketParserNet.Framework.Interface;
 
 namespace MarketParserNet.Domain.Impl
 {
+    using System;
     using System.Linq;
 
     using Castle.Core.Internal;
 
+    using Framework.DataAccess;
     using Framework.Entities;
 
     /// <summary>
@@ -21,9 +23,15 @@ namespace MarketParserNet.Domain.Impl
 
         private readonly IParser[] _parsers;
 
-        public ParserService(IParserServiceConfig config, IQueue queue, ILogger logger, IParser[] parsers)
+        private readonly IRepository<Guid, Product> _repository;
+
+        public ParserService(IParserServiceConfig config, IQueue queue, IParser[] parsers, IRepository<Guid, Product> repository, ILogger logger)
             : base(logger)
         {
+            if (repository != null)
+            {
+                _repository = repository;
+            }
             if (config != null)
             {
                 _config = config;
@@ -51,6 +59,7 @@ namespace MarketParserNet.Domain.Impl
             var page = arg.Message;
             var products =_parsers.SelectMany(p => p.ParseOnly(page)).Select(o => o.ToObject<Product>());
 
+            _repository.InsertOrUpdate(products.ToArray());
             return true;
         }
     }

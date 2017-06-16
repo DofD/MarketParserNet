@@ -91,6 +91,21 @@
         /// <param name="entities">Объекты</param>
         public void InsertOrUpdate(params Product[] entities)
         {
+            var dataProduct = GetAll().ToList();
+            foreach (var product in entities)
+            {
+                var existProduct = dataProduct.FirstOrDefault(p => p.Name == product.Name);
+                if (existProduct != null && product!= existProduct)
+                {
+                    Update(product);
+                    continue;
+                }
+
+                if (existProduct == null)
+                {
+                    Insert(product);
+                }
+            }
         }
 
         /// <summary>

@@ -100,7 +100,7 @@ namespace MarketParserNet.Domain.Impl.Configurations
         /// <summary>
         ///     Максимальное кол-во сообщений без подтверждения
         /// </summary>
-        public ushort PrefetchCount => (ushort)ConfigurationHelper.AppSettingInt(PrefetchCountKey, 1);
+        public ushort PrefetchCount => (ushort)ConfigurationHelper.AppSettingInt(PrefetchCountKey, 10);
 
         /// <summary>
         ///     Интервал переподключения

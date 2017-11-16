@@ -80,9 +80,17 @@
       <Project>{3f2a266d-f8f8-4f40-a082-b6e954f834ee}</Project>
       <Name>MarketParserNet.Bootstrap</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MarketParserNet.Domain\MarketParserNet.Domain.csproj">
+      <Project>{9206CEC6-2BAB-4046-82C0-866BFED62B3E}</Project>
+      <Name>MarketParserNet.Domain</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MarketParserNet.Framework\MarketParserNet.Framework.csproj">
       <Project>{07774426-A2B1-496C-88FF-3E9070CF119D}</Project>
       <Name>MarketParserNet.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tattoys.Parser\Tattoys.Parser.csproj">
+      <Project>{b7d08a26-933a-4a77-9036-7a994af0aba0}</Project>
+      <Name>Tattoys.Parser</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

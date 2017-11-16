@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-
-using MarketParserNet.Domain.Impl;
-
-using Newtonsoft.Json.Linq;
-
-namespace Tattoys.Parser
+﻿namespace MarketParserNet.Bootstrap.Empty
 {
-    public class TattoysParser : IParser
+    using System.Collections.Generic;
+
+    using Domain.Impl;
+
+    using Newtonsoft.Json.Linq;
+
+    public class NoParser : IParser
     {
         /// <summary>
         ///     Имя сайта
         /// </summary>
-        public string SiteName => "tattoys.ru";
+        public string SiteName => "Empty";
 
         /// <summary>
         ///     Парсить страницы начиная с
@@ -21,7 +20,7 @@ namespace Tattoys.Parser
         /// <returns>Результат парсинга</returns>
         public IList<JObject> ParseStartBy(params string[] webPages)
         {
-            throw new NotImplementedException();
+            return new List<JObject>();
         }
 
         /// <summary>
@@ -31,7 +30,7 @@ namespace Tattoys.Parser
         /// <returns>Результат парсинга</returns>
         public IList<JObject> ParseOnly(params string[] webPages)
         {
-            throw new NotImplementedException();
+            return new List<JObject>();
         }
     }
 }

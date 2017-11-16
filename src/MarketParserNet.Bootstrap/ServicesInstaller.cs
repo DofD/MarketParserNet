@@ -26,7 +26,7 @@ namespace MarketParserNet.Bootstrap
             // Регистрируем парсеры
             container.Register(
                 Classes.FromAssemblyInDirectory(new AssemblyFilter(PathUtil.AssemblyDirectory))
-                    .BasedOn<IParser>()
+                    .BasedOn<IParser>().WithServiceBase()
                     .LifestyleTransient());
 
             // Регистрируем сервис паука
